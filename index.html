@@ -17,7 +17,7 @@
   :root{
     --tinta:#0E1B36; --tinta-2:#1B2C52; --tinta-3:#31456F;
     --papel:#E7ECF3; --carta:#FFFFFF;
-    --ouro:#C8A63C; --ouro-2:#F0E3B8;
+    --ouro:#C8A63C; --ouro-2:color-mix(in srgb, var(--ouro) 38%, #fff);
     --texto:#0E1B36; --texto-2:#5D6A88; --linha:#D4DBE6;
     --alerta:#B3261E; --ambar:#A8710F; --ok:#1B6B48;
     --topo:56px;
@@ -43,9 +43,9 @@
     box-shadow:0 1px 0 rgba(255,255,255,.08),0 6px 20px rgba(14,27,54,.18);
   }
   .selo{
-    width:26px;height:26px;flex:0 0 26px;border-radius:5px;border:1.5px solid var(--ouro);
-    display:grid;place-items:center;color:var(--ouro);font-size:11px;font-weight:700;letter-spacing:.04em;
+    width:30px;height:30px;flex:0 0 30px;display:grid;place-items:center;color:var(--ouro);
   }
+  .selo svg{display:block}
   .marca{flex:1;min-width:0;text-align:left}
   .marca h1{
     margin:0;font-size:15px;font-weight:600;letter-spacing:-.01em;color:#fff;
@@ -89,6 +89,7 @@
   }
   .aba[aria-selected="true"]{color:#fff;border-bottom-color:var(--ouro)}
   .aba.prazos{color:var(--ouro-2)}
+  .aba.filtro{color:var(--ouro)}
   .aba .n{font-family:var(--mono);font-size:10px;margin-left:5px;opacity:.75}
 
   main{padding-top:calc(var(--topo) + var(--safe-t) + 36px);height:100dvh}
@@ -141,8 +142,30 @@
   .prazo.vencido{background:#FBE6E4;color:var(--alerta)}
   .autor{
     font-size:9.5px;font-weight:700;letter-spacing:.04em;color:#fff;background:var(--tinta-3);
-    width:18px;height:18px;border-radius:50%;display:grid;place-items:center;margin-left:auto;
+    width:19px;height:19px;border-radius:50%;display:grid;place-items:center;margin-left:auto;
+    box-shadow:0 0 0 2px var(--carta);
   }
+  .pessoas{display:flex;flex-wrap:wrap;gap:6px}
+  .pessoas button{
+    display:flex;align-items:center;gap:7px;padding:7px 12px 7px 8px;border-radius:20px;
+    border:1px solid var(--linha);background:var(--carta);font-size:13px;color:var(--texto-2);
+  }
+  .pessoas button[aria-pressed="true"]{background:var(--tinta);color:#fff;border-color:var(--tinta);font-weight:500}
+  .pessoas .av{
+    width:20px;height:20px;flex:0 0 20px;border-radius:50%;color:#fff;
+    font-size:9.5px;font-weight:700;display:grid;place-items:center;
+  }
+  .pessoas button.nenhum{padding-left:12px}
+  .selos{display:flex;gap:8px}
+  .selos button{
+    flex:1;padding:12px 6px 9px;border-radius:12px;border:1px solid var(--linha);background:var(--carta);
+    display:flex;flex-direction:column;align-items:center;gap:5px;font-size:10.5px;color:var(--texto-2);
+  }
+  .selos button[aria-pressed="true"]{border-color:var(--tinta);box-shadow:inset 0 0 0 1px var(--tinta)}
+  .selos .amostra{color:var(--ouro)}
+  .cores{display:flex;gap:9px;flex-wrap:wrap}
+  .cores button{width:34px;height:34px;border-radius:50%;border:2px solid transparent}
+  .cores button[aria-pressed="true"]{border-color:var(--tinta)}
   .cartao .nota{font-size:11px;color:var(--texto-2)}
   .pega{position:absolute;right:0;top:0;bottom:0;width:34px;display:grid;place-items:center;color:#C3CCDC;touch-action:none}
   .pega svg{width:14px;height:14px;stroke:currentColor;stroke-width:2;stroke-linecap:round}
@@ -234,7 +257,7 @@
 <body>
 
 <header class="topo">
-  <div class="selo">CG</div>
+  <div class="selo" id="selo"></div>
   <button class="marca" id="marca" aria-label="Sincronização">
     <h1 id="tituloApp">Central do Gabinete</h1>
     <p><span class="ponto" id="ponto"></span><span id="txtStatus">Só neste aparelho</span></p>
@@ -286,7 +309,7 @@ let ultimaAcao = Date.now();
 
 let estado = null;
 let cfg = { url:"", chave:"", quadro:"gabinete", senha:"", eu:"", lembrar:true };
-let vista = { pasta:null, modo:"quadro", busca:"" };
+let vista = { pasta:null, modo:"quadro", busca:"", resp:null };
 let semArmazenamento = false;
 let salvamento = null;
 
@@ -334,6 +357,31 @@ const vivas   = o => Object.values(o).filter(x => !x.del);
 const pastas  = () => vivas(estado.pastas).sort(ordenar);
 const colunas = pid => vivas(estado.colunas).filter(k => k.pasta === pid).sort(ordenar);
 const cartoes = kid => vivas(estado.cartoes).filter(c => c.coluna === kid).sort(ordenar);
+const equipe  = () => vivas(estado.membros || {}).sort((a,b) => String(a.nome).localeCompare(String(b.nome)));
+const quem    = mid => (estado.membros || {})[mid];
+
+function idMembro(nome){
+  const base = String(nome||"").trim().toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  return base ? "m-" + base : "";
+}
+
+/** registra quem está usando o quadro, para aparecer na lista de responsáveis */
+function registrarMembro(){
+  if(!cfg.eu) return false;
+  const mid = idMembro(cfg.eu);
+  if(!mid) return false;
+  const atual = (estado.membros || {})[mid];
+  const m = atual || { id:mid };
+  m.nome = cfg.eu.trim();
+  m.visto = agora();
+  m.mod = agora();
+  delete m.del;
+  estado.membros = estado.membros || {};
+  estado.membros[mid] = m;
+  return true;
+}
 
 function tocar(o){ o.mod = agora(); o.por = cfg.eu || ""; return o; }
 
@@ -364,13 +412,14 @@ function semente(){
   const dia = n => { const d = new Date(hoje); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); };
   const doc = { versao:2, virgem:true, titulo:"Central do Gabinete", tituloMod:0,
                 subtitulo:"Câmara Municipal de Petrópolis", subMod:0,
-                pastas:{}, colunas:{}, cartoes:{} };
+                marca:{ selo:"carimbo", mono:"CG", cor:"#C8A63C", mod:0 },
+                pastas:{}, colunas:{}, cartoes:{}, membros:{} };
   let n = 0;
   const P = (nome, ordem) => { const o = { id:id("p"), nome, ordem, mod:agora(), por:"" }; doc.pastas[o.id] = o; return o.id; };
   const K = (pasta, nome, ordem) => { const o = { id:id("k"), pasta, nome, ordem, mod:agora(), por:"" }; doc.colunas[o.id] = o; return o.id; };
   const C = (coluna, ordem, titulo, etiqueta, prazo, prioridade, notas) => {
     const o = { id:id("c"), coluna, ordem, n:++n, titulo, etiqueta:etiqueta||"", prazo:prazo||"",
-                prioridade:prioridade||"normal", notas:notas||"", mod:agora(), por:"" };
+                prioridade:prioridade||"normal", notas:notas||"", resp:"", mod:agora(), por:"" };
     doc.cartoes[o.id] = o;
   };
 
@@ -402,7 +451,7 @@ function semente(){
 /* ------- conversão do formato antigo (v1) ------- */
 function migrar(v){
   if(!v) return null;
-  if(v.versao === 2 && v.pastas && !Array.isArray(v.pastas)) return v;
+  if(v.versao === 2 && v.pastas && !Array.isArray(v.pastas)) return completar(v);
   if(!Array.isArray(v.pastas)) return null;
   const doc = { versao:2, titulo:v.titulo||"Central do Gabinete", tituloMod:0,
                 subtitulo:v.subtitulo||"", subMod:0, pastas:{}, colunas:{}, cartoes:{} };
@@ -422,6 +471,13 @@ function migrar(v){
   });
   let n = 0;
   Object.values(doc.cartoes).forEach(c => { if(!c.n) c.n = ++n; else n = Math.max(n, c.n); });
+  return doc;
+}
+
+/** completa campos que versões anteriores do arquivo não tinham */
+function completar(doc){
+  if(!doc.membros) doc.membros = {};
+  if(!doc.marca) doc.marca = { selo:"carimbo", mono:"CG", cor:"#C8A63C", mod:0 };
   return doc;
 }
 
@@ -445,14 +501,16 @@ function fundir(local, remoto){
     tituloMod: Math.max(local.tituloMod||0, remoto.tituloMod||0),
     subtitulo: (remoto.subMod||0) > (local.subMod||0) ? remoto.subtitulo : local.subtitulo,
     subMod:    Math.max(local.subMod||0, remoto.subMod||0),
+    marca:   ((remoto.marca||{}).mod||0) > ((local.marca||{}).mod||0) ? remoto.marca : (local.marca || remoto.marca),
     pastas:  fundirMapa(local.pastas,  remoto.pastas),
     colunas: fundirMapa(local.colunas, remoto.colunas),
-    cartoes: fundirMapa(local.cartoes, remoto.cartoes)
+    cartoes: fundirMapa(local.cartoes, remoto.cartoes),
+    membros: fundirMapa(local.membros || {}, remoto.membros || {})
   };
 }
 function limparTumulos(doc){
   const corte = agora() - TOMBO;
-  ["pastas","colunas","cartoes"].forEach(m => {
+  ["pastas","colunas","cartoes","membros"].forEach(m => {
     Object.keys(doc[m]).forEach(k => { if(doc[m][k].del && (doc[m][k].mod||0) < corte) delete doc[m][k]; });
   });
   return doc;
@@ -558,12 +616,13 @@ const Sinc = {
       if(remoto){
         // quadro ainda intocado neste aparelho: adota o da equipe inteiro,
         // para não empurrar os cartões de exemplo para dentro do quadro alheio
-        estado = limparTumulos(estado.virgem ? remoto : fundir(estado, remoto));
+        estado = completar(limparTumulos(estado.virgem ? remoto : fundir(estado, remoto)));
         estado.virgem = false;
         salvarLocal(); ajustarVista(); desenhar();
       }
       this.ligado = true;
       this.marcar("ok");
+      if(registrarMembro()){ salvarLocal(); desenharAbas(); }
       await this.enviar();          // sobe o que houver de local
       this.iniciarRelogio();
       return true;
@@ -613,7 +672,7 @@ const Sinc = {
         const linha = linhas[0];
         this.versao = linha.versao;
         if(linha.dados && linha.dados.pastas){
-          estado = limparTumulos(fundir(estado, linha.dados));
+          estado = completar(limparTumulos(fundir(estado, linha.dados)));
           salvarLocal(); ajustarVista();
           if(!arrasto && !folha.classList.contains("on")) desenhar(); else desenharAbas();
           if(linha.atualizado_por && linha.atualizado_por !== cfg.eu) brinde("Quadro atualizado por " + linha.atualizado_por + ".");
@@ -683,8 +742,54 @@ function ajustarVista(){
   if(!vista.pasta || !estado.pastas[vista.pasta] || estado.pastas[vista.pasta].del) vista.pasta = ps[0].id;
 }
 
+function htmlSelo(m){
+  m = m || {};
+  const mono = esc(String(m.mono || "CG").slice(0,3).toUpperCase());
+  const tam = mono.length > 2 ? 8.5 : 11;
+  const letra = '<text x="16" y="16.5" text-anchor="middle" dominant-baseline="central" '
+    + 'font-family="Lexend,system-ui,sans-serif" font-size="'+tam+'" font-weight="700" '
+    + 'letter-spacing="0.6" fill="currentColor">'+mono+'</text>';
+  const abre = '<svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true">';
+
+  if(m.selo === "brasao")
+    return abre + '<path d="M16 2.6 28.2 6.7v9c0 6.7-5.1 11.4-12.2 14-7.1-2.6-12.2-7.3-12.2-14v-9z" '
+      + 'fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>' + letra + '</svg>';
+
+  if(m.selo === "monograma")
+    return abre + '<text x="16" y="13.5" text-anchor="middle" dominant-baseline="central" '
+      + 'font-family="Lexend,system-ui,sans-serif" font-size="'+(mono.length>2?12:15)+'" font-weight="700" '
+      + 'letter-spacing="0.6" fill="currentColor">'+mono+'</text>'
+      + '<path d="M6.5 25.5h19" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>';
+
+  return abre
+    + '<circle cx="16" cy="16" r="13.3" fill="none" stroke="currentColor" stroke-width="1.6"/>'
+    + '<circle cx="16" cy="16" r="10.3" fill="none" stroke="currentColor" stroke-width="0.9" opacity="0.5"/>'
+    + letra + '</svg>';
+}
+
+function pintarMarca(){
+  const m = estado.marca || {};
+  const c = m.cor || "#C8A63C";
+  document.documentElement.style.setProperty("--ouro", c);
+  document.getElementById("selo").innerHTML = htmlSelo(m);
+  try{
+    const miolo = htmlSelo(m).replace(/currentColor/g, c)
+      .replace(/^<svg[^>]*>/, "").replace(/<\/svg>$/, "");
+    const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">'
+      + '<rect width="32" height="32" rx="7" fill="#0E1B36"/>'
+      + '<g transform="translate(1.6 1.6) scale(0.9)">' + miolo + '</g></svg>';
+    const link = document.querySelector('link[rel="icon"]');
+    if(link) link.href = "data:image/svg+xml," + encodeURIComponent(svg);
+  }catch(e){}
+}
+
 function desenharAbas(){
   let h = "";
+  if(vista.resp){
+    const m = quem(vista.resp);
+    h += '<button class="aba filtro" data-limpafiltro="1" aria-selected="false">'
+       + esc(m ? m.nome : "?") + ' ✕</button>';
+  }
   pastas().forEach(p => {
     const n = colunas(p.id).reduce((s,k) => s + cartoes(k.id).length, 0);
     h += '<button class="aba" role="tab" data-pasta="'+p.id+'" aria-selected="'+(vista.modo==="quadro" && vista.pasta===p.id)+'">'
@@ -703,7 +808,8 @@ function htmlCartao(c){
   if(c.etiqueta) h += '<span class="etiqueta">'+esc(c.etiqueta)+'</span>';
   if(p) h += '<span class="prazo '+p.cls+'">'+p.txt+'</span>';
   if(c.notas) h += '<span class="nota">✎</span>';
-  if(c.por && c.por !== cfg.eu) h += '<span class="autor" title="Editado por '+esc(c.por)+'">'+esc(iniciais(c.por))+'</span>';
+  const r = c.resp ? quem(c.resp) : null;
+  if(r && !r.del) h += '<span class="autor" style="background:'+cor(r.nome)+'" title="Responsável: '+esc(r.nome)+'">'+esc(iniciais(r.nome))+'</span>';
   h += '</div><span class="pega" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01"/></svg></span></article>';
   return h;
 }
@@ -713,12 +819,14 @@ function desenharQuadro(){
   if(!vista.pasta){ document.getElementById("tela").innerHTML = '<div class="rolo"><div class="nada">Nenhuma pasta.<br>Toque em “+ Pasta” para criar a primeira.</div></div>'; return; }
   let h = '<div class="trilho" id="trilho">';
   colunas(vista.pasta).forEach(k => {
-    const cs = cartoes(k.id);
+    const cs = cartoes(k.id).filter(c => !vista.resp || c.resp === vista.resp);
     h += '<section class="coluna" data-coluna="'+k.id+'">';
     h += '<div class="cab"><h2>'+esc(k.nome)+'</h2><span class="qtd">'+cs.length+'</span>'
        + '<button class="mais" data-addcol="'+k.id+'" aria-label="Nova tarefa em '+esc(k.nome)+'">+</button></div>';
     h += '<div class="lista" data-lista="'+k.id+'">';
-    if(!cs.length) h += '<div class="nada">Coluna vazia.<br>Toque em + no topo para criar.</div>';
+    if(!cs.length) h += '<div class="nada">'+(vista.resp
+      ? 'Nada aqui para essa pessoa.'
+      : 'Coluna vazia.<br>Toque em + no topo para criar.')+'</div>';
     cs.forEach(c => { h += htmlCartao(c); });
     h += '</div></section>';
   });
@@ -781,6 +889,7 @@ function desenharBusca(){
 
 function desenhar(){
   document.getElementById("tituloApp").textContent = estado.titulo || "Central do Gabinete";
+  pintarMarca();
   desenharAbas();
   if(vista.modo === "busca") desenharBusca();
   else if(vista.modo === "prazos") desenharPrazos();
@@ -838,6 +947,13 @@ function folhaCartao(cid, colunaPadrao){
     + '<div class="campo"><label>Prioridade</label><div class="segm" id="fPrio">'
     + '<button type="button" data-p="normal" aria-pressed="'+(base.prioridade!=="alta")+'">Normal</button>'
     + '<button type="button" data-p="alta" aria-pressed="'+(base.prioridade==="alta")+'">Alta</button></div></div>'
+    + '<div class="campo"><label>Responsável</label><div class="pessoas" id="fResp">'
+    + '<button type="button" class="nenhum" data-r="" aria-pressed="'+(!base.resp)+'">Ninguém</button>'
+    + equipe().map(m => '<button type="button" data-r="'+m.id+'" aria-pressed="'+(base.resp===m.id)+'">'
+        + '<span class="av" style="background:'+cor(m.nome)+'">'+esc(iniciais(m.nome))+'</span>'+esc(m.nome)+'</button>').join("")
+    + '</div>'
+    + (equipe().length ? '' : '<div class="dica">Ninguém entrou no quadro ainda. Assim que a equipe conectar com o próprio nome, os rostos aparecem aqui.</div>')
+    + '</div>'
     + '<div class="campo"><label for="fLocal">Pasta e coluna</label><select id="fLocal">'+opc+'</select></div>'
     + '<div class="campo"><label for="fNotas">Anotações</label><textarea id="fNotas" placeholder="Fundamentos, prazos regimentais, contatos…">'+esc(base.notas)+'</textarea></div>'
     + '<div class="acoes">'
@@ -848,6 +964,12 @@ function folhaCartao(cid, colunaPadrao){
 
   document.getElementById("fPrio").addEventListener("click", e => {
     const b = e.target.closest("button[data-p]");
+    if(!b) return;
+    [...e.currentTarget.children].forEach(x => x.setAttribute("aria-pressed", x === b));
+  });
+
+  document.getElementById("fResp").addEventListener("click", e => {
+    const b = e.target.closest("button[data-r]");
     if(!b) return;
     [...e.currentTarget.children].forEach(x => x.setAttribute("aria-pressed", x === b));
   });
@@ -865,6 +987,7 @@ function folhaCartao(cid, colunaPadrao){
       etiqueta: document.getElementById("fEtiqueta").value.trim(),
       prazo: document.getElementById("fPrazo").value,
       prioridade: document.querySelector('#fPrio button[aria-pressed="true"]').dataset.p,
+      resp: (document.querySelector('#fResp button[aria-pressed="true"]') || { dataset:{ r:"" } }).dataset.r,
       notas: document.getElementById("fNotas").value.trim()
     };
     const destino = document.getElementById("fLocal").value;
@@ -901,6 +1024,11 @@ function folhaMenu(){
     + '<button class="item-menu" data-acao="renomear-coluna"><span class="marca-icone">≡</span><span>Renomear ou excluir coluna</span></button>'
     + '<button class="item-menu" data-acao="nova-pasta"><span class="marca-icone">＋</span><span>Nova pasta</span></button>'
     + '<button class="item-menu" data-acao="excluir-pasta"><span class="marca-icone">🗑</span><span>Excluir pasta atual</span></button>'
+    + '<button class="item-menu" data-acao="equipe"><span class="marca-icone">☺</span><span>Equipe<small>'
+      + (equipe().length ? equipe().map(m => esc(m.nome)).join(", ") : "ninguém registrado ainda") + '</small></span></button>'
+    + '<button class="item-menu" data-acao="filtrar"><span class="marca-icone">⌕</span><span>'
+      + (vista.resp ? 'Trocar o filtro de responsável' : 'Ver só as tarefas de alguém') + '</span></button>'
+    + '<button class="item-menu" data-acao="marca"><span class="marca-icone">◈</span><span>Identidade visual<small>Selo, monograma e cor</small></span></button>'
     + '<button class="item-menu" data-acao="titulo"><span class="marca-icone">✦</span><span>Renomear o app</span></button>'
     + '<button class="item-menu" data-acao="exportar"><span class="marca-icone">↧</span><span>Exportar backup<small>Baixa um arquivo .json com tudo</small></span></button>'
     + '<button class="item-menu" data-acao="importar"><span class="marca-icone">↥</span><span>Importar backup<small>Mescla com o que já existe</small></span></button>'
@@ -988,6 +1116,110 @@ function folhaSinc(){
 
   const ag = document.getElementById("sAgora");
   if(ag) ag.addEventListener("click", async () => { await Sinc.puxar(); await Sinc.enviar(); brinde("Sincronizado."); });
+}
+
+/* =================== equipe e identidade =================== */
+
+function quando(ts){
+  if(!ts) return "";
+  const d = Math.round((agora() - ts) / 86400000);
+  if(d <= 0) return "hoje";
+  if(d === 1) return "ontem";
+  if(d < 30) return "há " + d + " dias";
+  return "há mais de um mês";
+}
+
+function folhaEquipe(){
+  const lista = equipe();
+  let h = '<h2>Equipe</h2>';
+  h += '<p>Quem já abriu este quadro. O nome vem do campo “Seu nome” na tela de sincronização, então cada pessoa entra sozinha na lista ao conectar.</p>';
+  if(!lista.length){
+    h += '<div class="nada">Ninguém registrado ainda.</div>';
+  }else{
+    lista.forEach(m => {
+      const minhas = vivas(estado.cartoes).filter(c => c.resp === m.id).length;
+      h += '<button class="item-menu" data-membro="'+m.id+'">'
+         + '<span class="av marca-icone" style="background:'+cor(m.nome)+';color:#fff;font-size:11px;font-weight:700">'+esc(iniciais(m.nome))+'</span>'
+         + '<span style="flex:1">'+esc(m.nome)+'<small>'+minhas+' tarefa'+(minhas===1?"":"s")
+         + ' · entrou '+quando(m.visto)+'</small></span>'
+         + '<span style="color:var(--alerta)" data-tirar="'+m.id+'">✕</span></button>';
+    });
+    h += '<div class="dica">Tirar alguém da lista não apaga as tarefas dela — só deixa de oferecer o nome como responsável.</div>';
+  }
+  abrirFolha(h + '<div class="acoes"><button class="btn claro" data-fechar="1">Fechar</button></div>');
+}
+
+function folhaFiltro(){
+  const lista = equipe();
+  let h = '<h2>Ver só as tarefas de</h2>';
+  h += '<div class="pessoas" style="margin-bottom:6px">';
+  h += '<button type="button" class="nenhum" data-filtrar="" aria-pressed="'+(!vista.resp)+'">Todas</button>';
+  lista.forEach(m => {
+    h += '<button type="button" data-filtrar="'+m.id+'" aria-pressed="'+(vista.resp===m.id)+'">'
+       + '<span class="av" style="background:'+cor(m.nome)+'">'+esc(iniciais(m.nome))+'</span>'+esc(m.nome)+'</button>';
+  });
+  h += '</div>';
+  h += '<div class="dica">O filtro vale só para você, não muda nada para a equipe.</div>';
+  abrirFolha(h + '<div class="acoes"><button class="btn claro" data-fechar="1">Fechar</button></div>');
+}
+
+const CORES_MARCA = [
+  ["#C8A63C","Ouro"], ["#2F8F6A","Verde"], ["#4A90D9","Azul"],
+  ["#C0566A","Vinho"], ["#E08A3C","Âmbar"], ["#AFBCCE","Prata"]
+];
+
+function folhaMarca(){
+  const m = Object.assign({ selo:"carimbo", mono:"CG", cor:"#C8A63C" }, estado.marca || {});
+  const opcoes = [["carimbo","Carimbo"],["brasao","Brasão"],["monograma","Monograma"]];
+  abrirFolha(
+    '<h2>Identidade visual</h2>'
+    + '<p>Vale para todo mundo no quadro — quando você salvar, o selo muda no aparelho da equipe também.</p>'
+    + '<div class="campo"><label>Formato do selo</label><div class="selos" id="mSelo">'
+    + opcoes.map(o => '<button type="button" data-s="'+o[0]+'" aria-pressed="'+(m.selo===o[0])+'">'
+        + '<span class="amostra">'+htmlSelo({ selo:o[0], mono:m.mono })+'</span>'+o[1]+'</button>').join("")
+    + '</div></div>'
+    + '<div class="campo"><label for="mMono">Monograma</label>'
+    + '<input id="mMono" maxlength="3" value="'+esc(m.mono)+'" placeholder="CG" autocapitalize="characters">'
+    + '<div class="dica">Uma a três letras. Como o gabinete é do Vereador Octavio Sampaio, “OS” também funciona.</div></div>'
+    + '<div class="campo"><label>Cor de destaque</label><div class="cores" id="mCor">'
+    + CORES_MARCA.map(c => '<button type="button" data-c="'+c[0]+'" aria-pressed="'+(m.cor===c[0])+'" '
+        + 'style="background:'+c[0]+'" aria-label="'+c[1]+'"></button>').join("")
+    + '</div></div>'
+    + '<div class="acoes"><button class="btn claro" data-fechar="1">Cancelar</button>'
+    + '<button class="btn" id="mSalvar">Salvar</button></div>'
+  );
+
+  const previa = () => {
+    const sel = document.querySelector('#mSelo button[aria-pressed="true"]').dataset.s;
+    const mono = document.getElementById("mMono").value.trim() || "CG";
+    const cor2 = document.querySelector('#mCor button[aria-pressed="true"]').dataset.c;
+    document.documentElement.style.setProperty("--ouro", cor2);
+    document.getElementById("selo").innerHTML = htmlSelo({ selo:sel, mono:mono, cor:cor2 });
+    [...document.querySelectorAll("#mSelo button")].forEach(b => {
+      b.querySelector(".amostra").innerHTML = htmlSelo({ selo:b.dataset.s, mono:mono });
+    });
+  };
+  document.getElementById("mSelo").addEventListener("click", e => {
+    const b = e.target.closest("button[data-s]"); if(!b) return;
+    [...e.currentTarget.children].forEach(x => x.setAttribute("aria-pressed", x === b));
+    previa();
+  });
+  document.getElementById("mCor").addEventListener("click", e => {
+    const b = e.target.closest("button[data-c]"); if(!b) return;
+    [...e.currentTarget.children].forEach(x => x.setAttribute("aria-pressed", x === b));
+    previa();
+  });
+  document.getElementById("mMono").addEventListener("input", previa);
+
+  document.getElementById("mSalvar").addEventListener("click", () => {
+    estado.marca = {
+      selo: document.querySelector('#mSelo button[aria-pressed="true"]').dataset.s,
+      mono: (document.getElementById("mMono").value.trim() || "CG").slice(0,3).toUpperCase(),
+      cor:  document.querySelector('#mCor button[aria-pressed="true"]').dataset.c,
+      mod:  agora()
+    };
+    fecharFolha(); mudou(); desenhar(); brinde("Identidade atualizada para a equipe.");
+  });
 }
 
 /* =================== convite da equipe =================== */
@@ -1116,6 +1348,9 @@ document.addEventListener("click", e => {
       estado.colunas[k.id] = k; mudou(); desenhar();
     });
     if(a === "renomear-coluna") folhaColunas();
+    if(a === "equipe") folhaEquipe();
+    if(a === "filtrar") folhaFiltro();
+    if(a === "marca") folhaMarca();
     if(a === "nova-pasta") criarPasta();
     if(a === "excluir-pasta" && p){
       const n = colunas(p.id).reduce((s,k) => s + cartoes(k.id).length, 0);
@@ -1144,6 +1379,28 @@ document.addEventListener("click", e => {
     return;
   }
 
+  const tirar = e.target.closest("[data-tirar]");
+  if(tirar){
+    e.stopPropagation();
+    const m = quem(tirar.dataset.tirar);
+    if(m){ m.del = true; m.mod = agora(); if(vista.resp === m.id) vista.resp = null; mudou(); desenhar(); }
+    folhaEquipe();
+    return;
+  }
+  const filtrar = e.target.closest("[data-filtrar]");
+  if(filtrar){
+    vista.resp = filtrar.dataset.filtrar || null;
+    fecharFolha(); desenhar();
+    return;
+  }
+  const membroBt = e.target.closest("[data-membro]");
+  if(membroBt){
+    vista.resp = membroBt.dataset.membro;
+    fecharFolha(); desenhar();
+    brinde("Mostrando só as tarefas de " + (quem(vista.resp) || {}).nome + ".");
+    return;
+  }
+
   const del = e.target.closest("[data-del]");
   if(del){
     e.stopPropagation();
@@ -1164,6 +1421,7 @@ document.addEventListener("click", e => {
   const aba = e.target.closest(".aba");
   if(aba){
     if(aba.dataset.nova){ criarPasta(); return; }
+    if(aba.dataset.limpafiltro){ vista.resp = null; desenhar(); return; }
     document.getElementById("barraBusca").classList.remove("on");
     vista.busca = "";
     if(aba.dataset.prazos) vista.modo = "prazos";
@@ -1372,7 +1630,7 @@ document.addEventListener("keydown", e => {
 (async function iniciar(){
   const salvo = await lerLocal(CHAVE_DOC);
   estado = migrar(salvo) || semente();
-  estado = limparTumulos(estado);
+  estado = limparTumulos(completar(estado));
 
   const c = await lerLocal(CHAVE_CFG);
   if(c) cfg = Object.assign(cfg, c);
