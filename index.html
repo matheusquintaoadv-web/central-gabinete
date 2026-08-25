@@ -177,6 +177,36 @@
   .nada{padding:22px 14px;text-align:center;color:var(--texto-2);font-size:12.5px;line-height:1.6}
 
   .rolo{height:100%;overflow-y:auto;padding:14px 14px calc(30px + var(--safe-b))}
+  .filtro-linha{margin-bottom:12px}
+  .filtro-linha input{
+    width:100%;background:var(--carta);border:1px solid var(--linha);
+    border-radius:10px;padding:11px 12px;font-size:15px;
+  }
+  .ficha{
+    background:var(--carta);border:1px solid var(--linha);border-radius:11px;
+    padding:11px 12px;margin-bottom:7px;display:flex;gap:11px;align-items:center;
+    width:100%;text-align:left;
+  }
+  .ficha .av{
+    width:34px;height:34px;flex:0 0 34px;border-radius:50%;color:#fff;
+    font-size:12px;font-weight:700;display:grid;place-items:center;
+  }
+  .ficha .nome{font-size:14.5px;font-weight:500}
+  .ficha .sub{font-size:11.5px;color:var(--texto-2)}
+  .ficha .conta{
+    font-family:var(--mono);font-size:10.5px;color:var(--texto-2);
+    background:#EEF1F6;padding:3px 7px;border-radius:6px;
+  }
+  .atalhos{display:flex;gap:8px;margin-bottom:14px}
+  .atalhos a{
+    flex:1;text-align:center;text-decoration:none;padding:11px 6px;border-radius:11px;
+    border:1px solid var(--linha);background:var(--carta);color:var(--tinta);
+    font-size:12.5px;font-weight:500;
+  }
+  .vinculo{
+    font-size:10.5px;color:var(--texto-2);display:inline-flex;align-items:center;gap:4px;
+  }
+  .vinculo::before{content:"☏";font-size:11px;opacity:.7}
   .grupo{margin-bottom:20px}
   .grupo h3{
     margin:0 0 8px;font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
@@ -315,7 +345,7 @@
    então duas pessoas podem mexer no quadro ao mesmo tempo.
    ============================================================ */
 
-const VERSAO_APP = 3;                   // sobe a cada versão nova do arquivo
+const VERSAO_APP = 4;                   // sobe a cada versão nova do arquivo
 const CHAVE_DOC = "gabinete-doc:v2";
 const CHAVE_CFG = "gabinete-cfg:v2";
 const PALETA = ["#2A5D8F","#7A4E9C","#1B6B48","#B3261E","#A8710F","#4A5568","#0E7490","#9B3B6E"];
@@ -327,7 +357,7 @@ let ultimaAcao = Date.now();
 
 let estado = null;
 let cfg = { url:"", chave:"", quadro:"gabinete", senha:"", eu:"", lembrar:true };
-let vista = { pasta:null, modo:"quadro", busca:"", resp:null };
+let vista = { pasta:null, modo:"quadro", busca:"", resp:null, buscaContato:"" };
 let semArmazenamento = false;
 let salvamento = null;
 
@@ -376,6 +406,22 @@ const pastas  = () => vivas(estado.pastas).sort(ordenar);
 const colunas = pid => vivas(estado.colunas).filter(k => k.pasta === pid).sort(ordenar);
 const cartoes = kid => vivas(estado.cartoes).filter(c => c.coluna === kid).sort(ordenar);
 const equipe  = () => vivas(estado.membros || {}).sort((a,b) => String(a.nome).localeCompare(String(b.nome)));
+const agenda  = () => vivas(estado.contatos || {}).sort((a,b) => String(a.nome).localeCompare(String(b.nome)));
+const contato = cid => (estado.contatos || {})[cid];
+
+/** transforma o telefone digitado em número para link (assume Brasil) */
+function foneLimpo(f){
+  const d = String(f || "").replace(/\D/g, "");
+  if(!d) return "";
+  return d.length <= 11 ? "55" + d : d;
+}
+function atendimentosDe(cid){
+  return vivas(estado.cartoes).filter(c => c.contatoId === cid);
+}
+function digitando(){
+  const a = document.activeElement;
+  return !!a && (a.tagName === "INPUT" || a.tagName === "TEXTAREA" || a.tagName === "SELECT");
+}
 const quem    = mid => (estado.membros || {})[mid];
 
 function idMembro(nome){
@@ -431,7 +477,7 @@ function semente(){
   const doc = { versao:2, virgem:true, titulo:"Central do Gabinete", tituloMod:0,
                 subtitulo:"Câmara Municipal de Petrópolis", subMod:0,
                 marca:{ selo:"carimbo", mono:"CG", cor:"#C8A63C", mod:0 },
-                pastas:{}, colunas:{}, cartoes:{}, membros:{} };
+                pastas:{}, colunas:{}, cartoes:{}, membros:{}, contatos:{} };
   let n = 0;
   const P = (nome, ordem) => { const o = { id:id("p"), nome, ordem, mod:agora(), por:"" }; doc.pastas[o.id] = o; return o.id; };
   const K = (pasta, nome, ordem) => { const o = { id:id("k"), pasta, nome, ordem, mod:agora(), por:"" }; doc.colunas[o.id] = o; return o.id; };
@@ -495,6 +541,7 @@ function migrar(v){
 /** completa campos que versões anteriores do arquivo não tinham */
 function completar(doc){
   if(!doc.membros) doc.membros = {};
+  if(!doc.contatos) doc.contatos = {};
   if(!doc.app) doc.app = { v:VERSAO_APP, mod:agora() };
   else if((doc.app.v || 0) < VERSAO_APP) doc.app = { v:VERSAO_APP, mod:agora() };
   if(!doc.marca) doc.marca = { selo:"carimbo", mono:"CG", cor:"#C8A63C", mod:0 };
@@ -526,12 +573,13 @@ function fundir(local, remoto){
     pastas:  fundirMapa(local.pastas,  remoto.pastas),
     colunas: fundirMapa(local.colunas, remoto.colunas),
     cartoes: fundirMapa(local.cartoes, remoto.cartoes),
-    membros: fundirMapa(local.membros || {}, remoto.membros || {})
+    membros:  fundirMapa(local.membros  || {}, remoto.membros  || {}),
+    contatos: fundirMapa(local.contatos || {}, remoto.contatos || {})
   };
 }
 function limparTumulos(doc){
   const corte = agora() - TOMBO;
-  ["pastas","colunas","cartoes","membros"].forEach(m => {
+  ["pastas","colunas","cartoes","membros","contatos"].forEach(m => {
     Object.keys(doc[m]).forEach(k => { if(doc[m][k].del && (doc[m][k].mod||0) < corte) delete doc[m][k]; });
   });
   return doc;
@@ -695,7 +743,7 @@ const Sinc = {
         if(linha.dados && linha.dados.pastas){
           estado = completar(limparTumulos(fundir(estado, linha.dados)));
           salvarLocal(); ajustarVista(); conferirVersao();
-          if(!arrasto && !folha.classList.contains("on")) desenhar(); else desenharAbas();
+          if(!arrasto && !folha.classList.contains("on") && !digitando()) desenhar(); else desenharAbas();
           if(linha.atualizado_por && linha.atualizado_por !== cfg.eu) brinde("Quadro atualizado por " + linha.atualizado_por + ".");
         }
       }
@@ -823,6 +871,8 @@ function desenharAbas(){
        + esc(p.nome) + '<span class="n">'+n+'</span></button>';
   });
   h += '<button class="aba prazos" role="tab" data-prazos="1" aria-selected="'+(vista.modo==="prazos")+'">Prazos</button>';
+  h += '<button class="aba prazos" role="tab" data-contatos="1" aria-selected="'+(vista.modo==="contatos")+'">Contatos'
+     + '<span class="n">'+agenda().length+'</span></button>';
   h += '<button class="aba" data-nova="1" aria-selected="false">+ Pasta</button>';
   document.getElementById("abas").innerHTML = h;
 }
@@ -835,6 +885,8 @@ function htmlCartao(c){
   if(c.etiqueta) h += '<span class="etiqueta">'+esc(c.etiqueta)+'</span>';
   if(p) h += '<span class="prazo '+p.cls+'">'+p.txt+'</span>';
   if(c.notas) h += '<span class="nota">✎</span>';
+  const pes = c.contatoId ? contato(c.contatoId) : null;
+  if(pes && !pes.del) h += '<span class="vinculo">'+esc(String(pes.nome).split(/\s+/)[0])+'</span>';
   const r = c.resp ? quem(c.resp) : null;
   if(r && !r.del) h += '<span class="autor" style="background:'+cor(r.nome)+'" title="Responsável: '+esc(r.nome)+'">'+esc(iniciais(r.nome))+'</span>';
   h += '</div><span class="pega" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01"/></svg></span></article>';
@@ -893,6 +945,40 @@ function desenharPrazos(){
   document.getElementById("tela").innerHTML = h + '</div>';
 }
 
+function linhasContatos(){
+  const q = (vista.buscaContato || "").trim().toLowerCase();
+  const lista = agenda().filter(c => !q ||
+    (c.nome+" "+(c.fone||"")+" "+(c.email||"")+" "+(c.bairro||"")+" "+(c.notas||"")).toLowerCase().indexOf(q) > -1);
+  if(!lista.length){
+    return '<div class="nada">'+(q
+      ? 'Nenhum contato encontrado.'
+      : 'Nenhum contato salvo ainda.<br>Toque em + para cadastrar quem procurou o gabinete.')+'</div>';
+  }
+  return lista.map(c => {
+    const n = atendimentosDe(c.id).length;
+    const sub = [c.bairro, c.fone].filter(Boolean).join(" · ");
+    return '<button class="ficha" data-contato="'+c.id+'">'
+      + '<span class="av" style="background:'+cor(c.nome)+'">'+esc(iniciais(c.nome))+'</span>'
+      + '<span style="flex:1;min-width:0"><span class="nome">'+esc(c.nome)+'</span>'
+      + (sub ? '<br><span class="sub">'+esc(sub)+'</span>' : '')+'</span>'
+      + (n ? '<span class="conta">'+n+'</span>' : '')+'</button>';
+  }).join("");
+}
+
+function desenharContatos(){
+  document.getElementById("tela").innerHTML =
+    '<div class="rolo">'
+    + '<div class="filtro-linha"><input id="filtroContato" type="search" placeholder="Buscar por nome, bairro ou telefone" '
+    + 'value="'+esc(vista.buscaContato || "")+'" autocomplete="off"></div>'
+    + '<div id="listaContatos">'+linhasContatos()+'</div>'
+    + '<div class="dica" style="margin-top:16px">Guarde só o necessário para atender. Nada de CPF, dado de saúde ou dado de outra pessoa que não procurou o gabinete.</div>'
+    + '</div>';
+  document.getElementById("filtroContato").addEventListener("input", e => {
+    vista.buscaContato = e.target.value;
+    document.getElementById("listaContatos").innerHTML = linhasContatos();
+  });
+}
+
 function desenharBusca(){
   const q = vista.busca.trim().toLowerCase();
   let h = '<div class="rolo">';
@@ -900,10 +986,22 @@ function desenharBusca(){
     h += '<div class="nada">Digite para buscar por título, etiqueta ou anotação.</div>';
   }else{
     const achados = vivas(estado.cartoes).filter(c => (c.titulo+" "+c.etiqueta+" "+c.notas).toLowerCase().indexOf(q) > -1);
-    if(!achados.length){
+    const pessoas = agenda().filter(c => (c.nome+" "+(c.fone||"")+" "+(c.email||"")+" "+(c.bairro||"")).toLowerCase().indexOf(q) > -1);
+    if(pessoas.length){
+      h += '<div class="grupo"><h3>'+pessoas.length+' contato'+(pessoas.length>1?"s":"")+'</h3>';
+      pessoas.forEach(c => {
+        h += '<button class="ficha" data-contato="'+c.id+'">'
+           + '<span class="av" style="background:'+cor(c.nome)+'">'+esc(iniciais(c.nome))+'</span>'
+           + '<span style="flex:1;min-width:0"><span class="nome">'+esc(c.nome)+'</span>'
+           + ((c.bairro||c.fone) ? '<br><span class="sub">'+esc([c.bairro,c.fone].filter(Boolean).join(" · "))+'</span>' : '')
+           + '</span></button>';
+      });
+      h += '</div>';
+    }
+    if(!achados.length && !pessoas.length){
       h += '<div class="nada">Nada encontrado para “'+esc(vista.busca)+'”.</div>';
-    }else{
-      h += '<div class="grupo"><h3>'+achados.length+' resultado'+(achados.length>1?"s":"")+'</h3>';
+    }else if(achados.length){
+      h += '<div class="grupo"><h3>'+achados.length+' tarefa'+(achados.length>1?"s":"")+'</h3>';
       achados.forEach(c => {
         h += '<button class="linha-item" data-cartao="'+c.id+'"><span style="flex:1;min-width:0">'
            + '<span class="tit">'+esc(c.titulo)+'</span><br><span class="onde">'+esc(ondeEsta(c))+'</span></span></button>';
@@ -920,8 +1018,10 @@ function desenhar(){
   desenharAbas();
   if(vista.modo === "busca") desenharBusca();
   else if(vista.modo === "prazos") desenharPrazos();
+  else if(vista.modo === "contatos") desenharContatos();
   else desenharQuadro();
-  document.getElementById("fab").style.display = (vista.modo === "quadro") ? "grid" : "none";
+  document.getElementById("fab").style.display =
+    (vista.modo === "quadro" || vista.modo === "contatos") ? "grid" : "none";
   pintarStatus();
 }
 
@@ -981,6 +1081,13 @@ function folhaCartao(cid, colunaPadrao){
     + '</div>'
     + (equipe().length ? '' : '<div class="dica">Ninguém entrou no quadro ainda. Assim que a equipe conectar com o próprio nome, os rostos aparecem aqui.</div>')
     + '</div>'
+    + '<div class="campo"><label for="fContato">Pessoa atendida</label><select id="fContato">'
+    + '<option value="">— nenhuma —</option>'
+    + agenda().map(k => '<option value="'+k.id+'"'+(base.contatoId===k.id?" selected":"")+'>'
+        + esc(k.nome) + (k.bairro ? " · "+esc(k.bairro) : "") + '</option>').join("")
+    + '</select>'
+    + (agenda().length ? '' : '<div class="dica">Nenhum contato cadastrado. Use a aba Contatos para incluir quem procurou o gabinete.</div>')
+    + '</div>'
     + '<div class="campo"><label for="fLocal">Pasta e coluna</label><select id="fLocal">'+opc+'</select></div>'
     + '<div class="campo"><label for="fNotas">Anotações</label><textarea id="fNotas" placeholder="Fundamentos, prazos regimentais, contatos…">'+esc(base.notas)+'</textarea></div>'
     + '<div class="acoes">'
@@ -1015,6 +1122,7 @@ function folhaCartao(cid, colunaPadrao){
       prazo: document.getElementById("fPrazo").value,
       prioridade: document.querySelector('#fPrio button[aria-pressed="true"]').dataset.p,
       resp: (document.querySelector('#fResp button[aria-pressed="true"]') || { dataset:{ r:"" } }).dataset.r,
+      contatoId: document.getElementById("fContato").value,
       notas: document.getElementById("fNotas").value.trim()
     };
     const destino = document.getElementById("fLocal").value;
@@ -1040,6 +1148,122 @@ function folhaCartao(cid, colunaPadrao){
   });
 }
 
+function pastaAtendimento(){
+  const p = pastas().find(x => /atendimento/i.test(x.nome));
+  return p || estado.pastas[vista.pasta] || pastas()[0];
+}
+
+function folhaContato(cid){
+  const c = cid ? contato(cid) : null;
+  const b = c || { nome:"", fone:"", email:"", bairro:"", origem:"", notas:"", autoriza:false };
+  const ligados = c ? atendimentosDe(c.id) : [];
+  const tel = foneLimpo(b.fone);
+
+  let h = '<h2>'+(c ? "Contato" : "Novo contato")+'</h2>';
+
+  if(c && (tel || b.email)){
+    h += '<div class="atalhos">';
+    if(tel) h += '<a href="tel:+'+tel+'">Ligar</a>';
+    if(tel) h += '<a href="https://wa.me/'+tel+'" target="_blank" rel="noopener">WhatsApp</a>';
+    if(b.email) h += '<a href="mailto:'+esc(b.email)+'">E-mail</a>';
+    h += '</div>';
+  }
+
+  h += '<div class="campo"><label for="kNome">Nome</label><input id="kNome" value="'+esc(b.nome)+'" placeholder="Como a pessoa se apresenta"></div>'
+    + '<div class="duo"><div class="campo"><label for="kFone">Telefone</label>'
+    + '<input id="kFone" type="tel" value="'+esc(b.fone)+'" placeholder="(24) 99999-0000"></div>'
+    + '<div class="campo"><label for="kBairro">Bairro</label><input id="kBairro" value="'+esc(b.bairro)+'" placeholder="Corrêas"></div></div>'
+    + '<div class="campo"><label for="kEmail">E-mail</label><input id="kEmail" type="email" value="'+esc(b.email)+'" placeholder="opcional" autocapitalize="off"></div>'
+    + '<div class="campo"><label for="kOrigem">Como chegou ao gabinete</label>'
+    + '<input id="kOrigem" list="listaOrigem" value="'+esc(b.origem)+'" placeholder="Presencial, WhatsApp, indicação…">'
+    + '<datalist id="listaOrigem"><option value="Presencial"><option value="WhatsApp"><option value="Telefone">'
+    + '<option value="Redes sociais"><option value="Indicação"><option value="Audiência pública"></datalist></div>'
+    + '<div class="campo"><label>Autorizou o gabinete a entrar em contato</label><div class="segm" id="kAutoriza">'
+    + '<button type="button" data-a="1" aria-pressed="'+(!!b.autoriza)+'">Sim</button>'
+    + '<button type="button" data-a="0" aria-pressed="'+(!b.autoriza)+'">Não perguntei</button></div></div>'
+    + '<div class="campo"><label for="kNotas">Observações</label>'
+    + '<textarea id="kNotas" placeholder="O que a pessoa procurou, referências de endereço, horário melhor para retorno…">'+esc(b.notas)+'</textarea>'
+    + '<div class="dica">Só o necessário para atender. Evite dado de saúde, opinião política ou informação de terceiros.</div></div>';
+
+  if(c){
+    h += '<div class="campo"><label>Atendimentos ligados a esta pessoa</label>';
+    if(!ligados.length){
+      h += '<div class="dica" style="margin-top:0">Nenhum ainda.</div>';
+    }else{
+      ligados.forEach(t => {
+        h += '<button class="linha-item" data-cartao="'+t.id+'" style="margin-top:6px">'
+           + '<span style="flex:1;min-width:0"><span class="tit">'+esc(t.titulo)+'</span><br>'
+           + '<span class="onde">'+esc(ondeEsta(t))+'</span></span></button>';
+      });
+    }
+    h += '</div><div class="acoes"><button class="btn claro" id="kNovoAtend">Abrir atendimento</button></div>';
+  }
+
+  h += '<div class="acoes">'
+    + (c ? '<button class="btn perigo" id="kExcluir" aria-label="Excluir contato">✕</button>' : '')
+    + '<button class="btn claro" data-fechar="1">Cancelar</button>'
+    + '<button class="btn" id="kSalvar">'+(c ? "Salvar" : "Cadastrar")+'</button></div>';
+
+  abrirFolha(h);
+
+  document.getElementById("kAutoriza").addEventListener("click", e => {
+    const bt = e.target.closest("button[data-a]");
+    if(!bt) return;
+    [...e.currentTarget.children].forEach(x => x.setAttribute("aria-pressed", x === bt));
+  });
+
+  if(c) document.getElementById("kExcluir").addEventListener("click", () => {
+    abrirFolha('<h2>Excluir contato</h2><p>Isso apaga <strong>'+esc(c.nome)+'</strong> do quadro de todo mundo. '
+      + (ligados.length ? 'Os '+ligados.length+' atendimentos continuam, só ficam sem contato ligado.' : '')+'</p>'
+      + '<div class="acoes"><button class="btn claro" data-fechar="1">Cancelar</button>'
+      + '<button class="btn" id="kConf" style="background:var(--alerta)">Excluir</button></div>');
+    document.getElementById("kConf").addEventListener("click", () => {
+      atendimentosDe(c.id).forEach(t => { t.contatoId = ""; tocar(t); });
+      c.del = true; tocar(c);
+      fecharFolha(); mudou(); desenhar(); brinde("Contato excluído.");
+    });
+  });
+
+  if(c) document.getElementById("kNovoAtend").addEventListener("click", () => {
+    const p = pastaAtendimento();
+    const k = p ? colunas(p.id)[0] : null;
+    if(!k){ brinde("Crie uma pasta de atendimentos antes."); return; }
+    const primeiro = cartoes(k.id)[0];
+    const novo = tocar({
+      id:id("c"), coluna:k.id, ordem: primeiro ? primeiro.ordem - 1 : 0, n:proximoN(),
+      titulo:"Atendimento — "+c.nome, etiqueta:"Atendimento", prazo:"", prioridade:"normal",
+      notas:"", resp:"", contatoId:c.id
+    });
+    estado.cartoes[novo.id] = novo;
+    vista.pasta = p.id; vista.modo = "quadro";
+    fecharFolha(); mudou(); desenhar();
+    brinde("Atendimento aberto em "+p.nome+".");
+  });
+
+  document.getElementById("kSalvar").addEventListener("click", () => {
+    const nome = document.getElementById("kNome").value.trim();
+    if(!nome){ document.getElementById("kNome").focus(); brinde("O contato precisa de um nome."); return; }
+    const dados = {
+      nome,
+      fone: document.getElementById("kFone").value.trim(),
+      email: document.getElementById("kEmail").value.trim(),
+      bairro: document.getElementById("kBairro").value.trim(),
+      origem: document.getElementById("kOrigem").value.trim(),
+      autoriza: document.querySelector('#kAutoriza button[aria-pressed="true"]').dataset.a === "1",
+      notas: document.getElementById("kNotas").value.trim()
+    };
+    if(c){
+      Object.assign(c, dados); tocar(c);
+    }else{
+      const novo = tocar(Object.assign({ id:id("k"), criado:agora() }, dados));
+      estado.contatos = estado.contatos || {};
+      estado.contatos[novo.id] = novo;
+    }
+    fecharFolha(); mudou();
+    vista.modo = "contatos"; desenhar();
+  });
+}
+
 function folhaMenu(){
   const p = vista.pasta ? estado.pastas[vista.pasta] : null;
   abrirFolha(
@@ -1057,6 +1281,7 @@ function folhaMenu(){
       + (vista.resp ? 'Trocar o filtro de responsável' : 'Ver só as tarefas de alguém') + '</span></button>'
     + '<button class="item-menu" data-acao="marca"><span class="marca-icone">◈</span><span>Identidade visual<small>Selo, monograma e cor</small></span></button>'
     + '<button class="item-menu" data-acao="titulo"><span class="marca-icone">✦</span><span>Renomear o app</span></button>'
+    + '<button class="item-menu" data-acao="csv"><span class="marca-icone">▦</span><span>Exportar contatos (CSV)<small>Abre no Excel; serve também para atender pedido de titular</small></span></button>'
     + '<button class="item-menu" data-acao="exportar"><span class="marca-icone">↧</span><span>Exportar backup<small>Baixa um arquivo .json com tudo</small></span></button>'
     + '<button class="item-menu" data-acao="importar"><span class="marca-icone">↥</span><span>Importar backup<small>Mescla com o que já existe</small></span></button>'
   );
@@ -1402,6 +1627,22 @@ document.addEventListener("click", e => {
       setTimeout(() => URL.revokeObjectURL(url), 1500);
       fecharFolha(); brinde("Backup exportado.");
     }
+    if(a === "csv"){
+      const lista = agenda();
+      if(!lista.length){ brinde("Nenhum contato para exportar."); return; }
+      const campo = v => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"';
+      const linhas = [["Nome","Telefone","E-mail","Bairro","Origem","Autorizou contato","Observações","Atendimentos"]
+        .map(campo).join(";")];
+      lista.forEach(k => linhas.push([k.nome, k.fone, k.email, k.bairro, k.origem,
+        k.autoriza ? "sim" : "não", k.notas, atendimentosDe(k.id).length].map(campo).join(";")));
+      const blob = new Blob(["\ufeff" + linhas.join("\r\n")], { type:"text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a3 = document.createElement("a");
+      a3.href = url; a3.download = "contatos-gabinete-" + new Date().toISOString().slice(0,10) + ".csv";
+      document.body.appendChild(a3); a3.click(); a3.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+      fecharFolha(); brinde(lista.length + " contatos exportados.");
+    }
     if(a === "importar") document.getElementById("arquivo").click();
     return;
   }
@@ -1452,6 +1693,7 @@ document.addEventListener("click", e => {
     document.getElementById("barraBusca").classList.remove("on");
     vista.busca = "";
     if(aba.dataset.prazos) vista.modo = "prazos";
+    else if(aba.dataset.contatos) vista.modo = "contatos";
     else { vista.pasta = aba.dataset.pasta; vista.modo = "quadro"; }
     desenhar();
     return;
@@ -1459,6 +1701,9 @@ document.addEventListener("click", e => {
 
   const add = e.target.closest("[data-addcol]");
   if(add){ folhaCartao(null, add.dataset.addcol); return; }
+
+  const fichaBt = e.target.closest("[data-contato]");
+  if(fichaBt){ folhaContato(fichaBt.dataset.contato); return; }
 
   const linha = e.target.closest(".linha-item");
   if(linha){ folhaCartao(linha.dataset.cartao); return; }
@@ -1488,7 +1733,10 @@ document.getElementById("btAtualizar").addEventListener("click", () => {
   location.replace(location.pathname + "?v=" + Date.now());
 });
 
-document.getElementById("fab").addEventListener("click", () => folhaCartao(null, null));
+document.getElementById("fab").addEventListener("click", () => {
+  if(vista.modo === "contatos") folhaContato(null);
+  else folhaCartao(null, null);
+});
 document.getElementById("btMenu").addEventListener("click", folhaMenu);
 document.getElementById("marca").addEventListener("click", folhaSinc);
 
