@@ -243,6 +243,19 @@
   .passos li{margin-bottom:5px}
   .passos code{font-family:var(--mono);font-size:11.5px;background:#DDE4EE;padding:1px 5px;border-radius:4px;color:var(--tinta)}
 
+  .faixa-nova{
+    position:fixed;left:14px;right:86px;bottom:calc(22px + var(--safe-b));z-index:58;
+    display:none;align-items:center;gap:10px;
+    background:var(--tinta);color:#fff;font-size:13px;
+    padding:11px 12px 11px 15px;border-radius:14px;
+    box-shadow:0 8px 24px rgba(14,27,54,.32);
+  }
+  .faixa-nova.on{display:flex}
+  .faixa-nova span{flex:1;min-width:0}
+  .faixa-nova button{
+    flex:0 0 auto;background:var(--ouro);color:var(--tinta);
+    font-size:12.5px;font-weight:700;padding:7px 13px;border-radius:9px;
+  }
   .brinde{
     position:fixed;left:50%;bottom:calc(96px + var(--safe-b));z-index:60;
     transform:translate(-50%,14px);opacity:0;transition:.2s;background:var(--tinta);color:#fff;
@@ -284,6 +297,10 @@
 <div class="veu" id="veu"></div>
 <div class="folha" id="folha" role="dialog" aria-modal="true"></div>
 <div class="brinde" id="brinde"></div>
+<div class="faixa-nova" id="faixaNova">
+  <span>Saiu uma versão nova do app.</span>
+  <button id="btAtualizar">Atualizar</button>
+</div>
 <input type="file" id="arquivo" accept="application/json,.json" hidden>
 
 <script>
@@ -298,6 +315,7 @@
    então duas pessoas podem mexer no quadro ao mesmo tempo.
    ============================================================ */
 
+const VERSAO_APP = 3;                   // sobe a cada versão nova do arquivo
 const CHAVE_DOC = "gabinete-doc:v2";
 const CHAVE_CFG = "gabinete-cfg:v2";
 const PALETA = ["#2A5D8F","#7A4E9C","#1B6B48","#B3261E","#A8710F","#4A5568","#0E7490","#9B3B6E"];
@@ -477,6 +495,8 @@ function migrar(v){
 /** completa campos que versões anteriores do arquivo não tinham */
 function completar(doc){
   if(!doc.membros) doc.membros = {};
+  if(!doc.app) doc.app = { v:VERSAO_APP, mod:agora() };
+  else if((doc.app.v || 0) < VERSAO_APP) doc.app = { v:VERSAO_APP, mod:agora() };
   if(!doc.marca) doc.marca = { selo:"carimbo", mono:"CG", cor:"#C8A63C", mod:0 };
   return doc;
 }
@@ -501,6 +521,7 @@ function fundir(local, remoto){
     tituloMod: Math.max(local.tituloMod||0, remoto.tituloMod||0),
     subtitulo: (remoto.subMod||0) > (local.subMod||0) ? remoto.subtitulo : local.subtitulo,
     subMod:    Math.max(local.subMod||0, remoto.subMod||0),
+    app:     ((remoto.app||{}).v||0) > ((local.app||{}).v||0) ? remoto.app : (local.app || remoto.app),
     marca:   ((remoto.marca||{}).mod||0) > ((local.marca||{}).mod||0) ? remoto.marca : (local.marca || remoto.marca),
     pastas:  fundirMapa(local.pastas,  remoto.pastas),
     colunas: fundirMapa(local.colunas, remoto.colunas),
@@ -618,7 +639,7 @@ const Sinc = {
         // para não empurrar os cartões de exemplo para dentro do quadro alheio
         estado = completar(limparTumulos(estado.virgem ? remoto : fundir(estado, remoto)));
         estado.virgem = false;
-        salvarLocal(); ajustarVista(); desenhar();
+        salvarLocal(); ajustarVista(); conferirVersao(); desenhar();
       }
       this.ligado = true;
       this.marcar("ok");
@@ -673,7 +694,7 @@ const Sinc = {
         this.versao = linha.versao;
         if(linha.dados && linha.dados.pastas){
           estado = completar(limparTumulos(fundir(estado, linha.dados)));
-          salvarLocal(); ajustarVista();
+          salvarLocal(); ajustarVista(); conferirVersao();
           if(!arrasto && !folha.classList.contains("on")) desenhar(); else desenharAbas();
           if(linha.atualizado_por && linha.atualizado_por !== cfg.eu) brinde("Quadro atualizado por " + linha.atualizado_por + ".");
         }
@@ -713,6 +734,12 @@ const Sinc = {
     this.ocupado = false;
   }
 };
+
+function conferirVersao(){
+  if(((estado.app || {}).v || 0) > VERSAO_APP){
+    document.getElementById("faixaNova").classList.add("on");
+  }
+}
 
 function pintarStatus(){
   const ponto = document.getElementById("ponto");
@@ -1454,6 +1481,11 @@ document.getElementById("arquivo").addEventListener("change", e => {
   };
   leitor.readAsText(f);
   e.target.value = "";
+});
+
+document.getElementById("btAtualizar").addEventListener("click", () => {
+  // a query nova obriga o navegador a buscar o arquivo no servidor em vez do cache
+  location.replace(location.pathname + "?v=" + Date.now());
 });
 
 document.getElementById("fab").addEventListener("click", () => folhaCartao(null, null));
