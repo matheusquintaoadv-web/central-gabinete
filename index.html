@@ -279,7 +279,10 @@ const CHAVE_DOC = "gabinete-doc:v2";
 const CHAVE_CFG = "gabinete-cfg:v2";
 const PALETA = ["#2A5D8F","#7A4E9C","#1B6B48","#B3261E","#A8710F","#4A5568","#0E7490","#9B3B6E"];
 const TOMBO = 45 * 86400000;           // tempo que os registros excluídos ficam guardados
-const INTERVALO = 5000;                // ritmo da checagem no servidor
+const RAPIDO = 3000;                   // checagem enquanto a pessoa está usando
+const LENTO  = 15000;                  // checagem quando ocioso ou em segundo plano
+const OCIO   = 120000;                 // tempo sem toque para considerar ocioso
+let ultimaAcao = Date.now();
 
 let estado = null;
 let cfg = { url:"", chave:"", quadro:"gabinete", senha:"", eu:"", lembrar:true };
@@ -579,18 +582,22 @@ const Sinc = {
 
   desligar(){
     this.ligado = false; this.versao = null; this.sujo = false;
-    clearInterval(this.timer); this.timer = null;
+    clearTimeout(this.timer); this.timer = null;
     clearTimeout(this.retentar); this.retentar = null;
     this.marcar("local");
   },
 
   iniciarRelogio(){
-    clearInterval(this.timer);
-    this.timer = setInterval(async () => {
-      if(!this.ligado || document.hidden || arrasto) return;
-      await this.puxar();
-      if(this.sujo) await this.enviar();   // reenvia o que ficou preso offline
-    }, INTERVALO);
+    clearTimeout(this.timer);
+    const passo = async () => {
+      if(this.ligado && !document.hidden && !arrasto){
+        await this.puxar();
+        if(this.sujo) await this.enviar();   // reenvia o que ficou preso offline
+      }
+      const ocioso = (agora() - ultimaAcao) > OCIO;
+      this.timer = setTimeout(passo, (document.hidden || ocioso) ? LENTO : RAPIDO);
+    };
+    this.timer = setTimeout(passo, RAPIDO);
   },
 
   /** checa a versão no servidor (barato) e só baixa o documento se mudou */
@@ -938,7 +945,8 @@ function folhaSinc(){
     + (conectado ? '<button class="btn claro" id="sDesligar">Desligar</button>'
                  : '<button class="btn claro" id="sTestar">Testar conexão</button>')
     + '<button class="btn" id="sConectar">'+(conectado ? "Salvar e sincronizar" : "Conectar")+'</button></div>'
-    + (conectado ? '<div class="acoes"><button class="btn claro" id="sAgora">Sincronizar agora</button></div>' : '')
+    + (conectado ? '<div class="acoes"><button class="btn claro" id="sAgora">Sincronizar agora</button>'
+                 + '<button class="btn claro" id="sConvite">Convidar a equipe</button></div>' : '')
   );
 
   document.getElementById("sLembrar").addEventListener("click", e => {
@@ -961,8 +969,10 @@ function folhaSinc(){
     await gravarLocal(CHAVE_CFG, Object.assign({}, cfg, { senha: cfg.lembrar ? cfg.senha : "" }));
     fecharFolha();
     const ok = await Sinc.conectar(false);
-    if(ok) brinde("Conectado. O quadro agora é compartilhado.");
+    if(ok){ brinde("Conectado. O quadro agora é compartilhado."); desenhar(); return; }
     desenhar();
+    folhaSinc();          // reabre com os campos preenchidos
+    diagnosticar();       // e já mostra em qual etapa travou
   });
 
   const bt = document.getElementById("sDesligar");
@@ -973,8 +983,51 @@ function folhaSinc(){
     fecharFolha(); desenhar(); brinde("Sincronização desligada. Os dados seguem neste aparelho.");
   });
 
+  const cv = document.getElementById("sConvite");
+  if(cv) cv.addEventListener("click", folhaConvite);
+
   const ag = document.getElementById("sAgora");
   if(ag) ag.addEventListener("click", async () => { await Sinc.puxar(); await Sinc.enviar(); brinde("Sincronizado."); });
+}
+
+/* =================== convite da equipe =================== */
+
+function linkConvite(){
+  const publico = { u:cfg.url, k:cfg.chave, q:cfg.quadro };   // sem a senha, de propósito
+  const frag = "#g=" + btoa(unescape(encodeURIComponent(JSON.stringify(publico))));
+  const hospedado = (location.protocol === "http:" || location.protocol === "https:") && location.host;
+  const base = hospedado ? location.origin + location.pathname : "";
+  return { frag, base, link: base ? base + frag : "", hospedado };
+}
+
+function lerConvite(){
+  const m = /[#&]g=([^&]+)/.exec(location.hash || "");
+  if(!m) return null;
+  try{ return JSON.parse(decodeURIComponent(escape(atob(m[1])))); }
+  catch(e){ return null; }
+}
+
+function folhaConvite(){
+  const c = linkConvite();
+  abrirFolha(
+    '<h2>Convidar a equipe</h2>'
+    + (c.hospedado
+        ? '<p>Mande este link para a pessoa. Ele já traz o endereço do projeto, a chave e o nome do quadro — ela só precisa digitar o próprio nome e a senha.</p>'
+          + '<div class="campo"><label for="cLink">Link do convite</label><input id="cLink" readonly value="'+esc(c.link)+'"></div>'
+          + '<div class="aviso">Mande a <strong>senha do quadro</strong> por outro caminho — outra conversa, ligação, pessoalmente. Ela é a única coisa que protege os dados; o link sozinho não abre nada.</div>'
+          + '<div class="acoes"><button class="btn claro" data-fechar="1">Fechar</button><button class="btn" id="cCopiar">Copiar link</button></div>'
+        : '<div class="aviso">O app está rodando dentro do Claude, então não tem endereço próprio para compartilhar. Hospede o arquivo (GitHub Pages, por exemplo) e volte aqui: o link do convite aparece pronto.</div>'
+          + '<div class="campo"><label for="cLink">Trecho para colar no fim do seu endereço</label><input id="cLink" readonly value="'+esc(c.frag)+'"></div>'
+          + '<div class="acoes"><button class="btn" data-fechar="1">Fechar</button></div>')
+  );
+  const campo = document.getElementById("cLink");
+  campo.addEventListener("click", () => campo.select());
+  const bt = document.getElementById("cCopiar");
+  if(bt) bt.addEventListener("click", async () => {
+    campo.select();
+    try{ await navigator.clipboard.writeText(c.link); brinde("Link copiado."); }
+    catch(e){ brinde("Copie o link selecionado acima."); }
+  });
 }
 
 /* =================== diagnóstico =================== */
@@ -1048,6 +1101,7 @@ function criarPasta(){
 }
 
 document.addEventListener("click", e => {
+  ultimaAcao = Date.now();
   if(e.target.closest("[data-fechar]")){ fecharFolha(); return; }
 
   const item = e.target.closest("[data-acao]");
@@ -1175,6 +1229,7 @@ let arrasto = null, arrastou = false, temporizador = null, inicio = null;
 let velX = 0, velY = 0, listaVel = null, quadroAF = null;
 
 document.addEventListener("pointerdown", e => {
+  ultimaAcao = Date.now();
   if(e.button !== undefined && e.button !== 0) return;
   const cartao = e.target.closest(".cartao");
   if(!cartao) return;
@@ -1325,7 +1380,13 @@ document.addEventListener("keydown", e => {
   ajustarVista();
   desenhar();
 
-  if(cfg.url && cfg.chave){
+  const convite = lerConvite();
+  if(convite && convite.u && convite.k && !cfg.url){
+    cfg.url = convite.u; cfg.chave = convite.k; cfg.quadro = convite.q || "gabinete";
+    try{ history.replaceState(null, "", location.pathname + location.search); }catch(e){}
+    folhaSinc();
+    brinde("Convite recebido. Falta seu nome e a senha do quadro.");
+  }else if(cfg.url && cfg.chave){
     if(cfg.senha){ Sinc.conectar(true); }
     else { brinde("Digite a senha do quadro para sincronizar."); folhaSinc(); }
   }
