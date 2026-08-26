@@ -382,7 +382,7 @@
    então duas pessoas podem mexer no quadro ao mesmo tempo.
    ============================================================ */
 
-const VERSAO_APP = 7;                   // sobe a cada versão nova do arquivo
+const VERSAO_APP = 8;                   // sobe a cada versão nova do arquivo
 const CHAVE_DOC = "gabinete-doc:v2";
 const CHAVE_CFG = "gabinete-cfg:v2";
 const CHAVE_SES = "gabinete-sessao:v1";
@@ -801,7 +801,12 @@ const Auth = {
       body: JSON.stringify({ email: String(email).trim().toLowerCase(), token: String(codigo).trim(), type:"email" })
     });
     const t = await r.text();
-    if(!r.ok) throw new Error(detalhe(t) || ("HTTP " + r.status));
+    if(!r.ok){
+      const d0 = detalhe(t);
+      throw new Error(d0 || (r.status === 403 || r.status === 401
+        ? "Código incorreto ou já vencido. Peça um novo em “Reenviar código”."
+        : "HTTP " + r.status));
+    }
     const d = JSON.parse(t);
     sessao = {
       token: d.access_token, refresh: d.refresh_token,
@@ -868,8 +873,25 @@ function cabecalhos(chave){
 }
 function detalhe(txt){
   if(!txt) return "";
-  try{ const j = JSON.parse(txt); return j.message || j.hint || j.error_description || j.error || ""; }
-  catch(e){ return String(txt).slice(0,140); }
+  let m = "";
+  try{ const j = JSON.parse(txt); m = j.message || j.hint || j.error_description || j.error || ""; }
+  catch(e){ m = String(txt).slice(0,140); }
+  return traduzir(m);
+}
+
+/** as mensagens do Supabase vêm em inglês; as mais comuns viram português */
+function traduzir(m){
+  const t = String(m || "");
+  if(/expired or is invalid|invalid.*token|otp.*expired/i.test(t))
+    return "Código incorreto ou já vencido. Peça um novo em “Reenviar código”.";
+  if(/rate limit|too many requests|for security purposes/i.test(t))
+    return "Muitas tentativas seguidas. Espere um minuto e tente de novo.";
+  if(/signups not allowed|not authorized|user not found/i.test(t))
+    return "Este e-mail não está liberado para entrar.";
+  if(/error sending|smtp|mail/i.test(t))
+    return "O servidor não conseguiu enviar o e-mail. Confira a configuração de SMTP.";
+  if(/invalid.*email/i.test(t)) return "E-mail inválido.";
+  return t;
 }
 
 const Sinc = {
@@ -1830,8 +1852,8 @@ function folhaLogin(passo, email, erro){
     + '<div class="aviso">Chegou um <strong>link</strong> em vez de números? Também serve: toque no link do e-mail que você entra direto, sem precisar digitar nada aqui.</div>'
     + (erro ? '<div class="aviso ruim">'+esc(erro)+'</div>' : '')
     + '<div class="campo"><label for="lCodigo">Código</label>'
-    + '<input id="lCodigo" inputmode="numeric" maxlength="6" placeholder="000000" autocomplete="one-time-code" '
-    + 'style="font-family:var(--mono);font-size:22px;letter-spacing:.3em;text-align:center"></div>'
+    + '<input id="lCodigo" inputmode="numeric" maxlength="10" placeholder="Digite o código do e-mail" autocomplete="one-time-code" '
+    + 'style="font-family:var(--mono);font-size:20px;letter-spacing:.22em;text-align:center"></div>'
     + '<div class="acoes"><button class="btn claro" id="lVoltar">Trocar e-mail</button>'
     + '<button class="btn" id="lEntrar">Entrar</button></div>'
     + '<div class="acoes"><button class="btn claro" id="lReenviar">Reenviar código</button></div>'
@@ -1839,8 +1861,8 @@ function folhaLogin(passo, email, erro){
   const inp = document.getElementById("lCodigo");
   setTimeout(() => inp.focus(), 250);
   const entrar = async () => {
-    const cod = inp.value.trim();
-    if(cod.length < 6){ brinde("O código tem 6 dígitos."); return; }
+    const cod = inp.value.replace(/\D/g, "");   // tira espaços e traços que o e-mail às vezes traz
+    if(cod.length < 4){ brinde("Digite o código que chegou no e-mail."); return; }
     const bt = document.getElementById("lEntrar");
     bt.textContent = "Conferindo…"; bt.disabled = true;
     try{
