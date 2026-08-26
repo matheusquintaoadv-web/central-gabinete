@@ -170,6 +170,26 @@
   .pega{position:absolute;right:0;top:0;bottom:0;width:34px;display:grid;place-items:center;color:#C3CCDC;touch-action:none}
   .pega svg{width:14px;height:14px;stroke:currentColor;stroke-width:2;stroke-linecap:round}
 
+  .cartao.feito{background:#F7F9FB}
+  .cartao.feito .tit{color:var(--texto-2);text-decoration:line-through;text-decoration-color:#B9C4D4}
+  .cartao.feito::before{background:var(--ok)}
+  .cartao.feito.alta::after{display:none}
+  .feito-bt{
+    position:relative;margin-left:auto;flex:0 0 22px;width:22px;height:22px;border-radius:50%;
+    border:1.5px solid var(--linha);background:var(--carta);color:transparent;
+    font-size:12px;line-height:1;display:grid;place-items:center;
+  }
+  .feito-bt::after{content:"";position:absolute;inset:-9px}
+  .feito-bt.on{background:var(--ok);border-color:var(--ok);color:#fff}
+  .feito-bt + .autor{margin-left:6px}
+  .selo-aberto{
+    font-size:9.5px;font-weight:600;letter-spacing:.05em;color:var(--texto-2);
+    border:1px solid var(--linha);padding:2px 6px;border-radius:5px;
+  }
+  .selo-final{
+    font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--ok);background:#E4F2EA;padding:2px 6px;border-radius:5px;
+  }
   .cartao.origem{opacity:.28}
   .fantasma{position:fixed;z-index:200;pointer-events:none;box-shadow:0 14px 34px rgba(14,27,54,.28);transform:rotate(1.4deg);border-color:var(--ouro)}
   .vazio-lugar{border:1.5px dashed var(--ouro);background:rgba(200,166,60,.09);border-radius:10px;flex:0 0 auto}
@@ -266,6 +286,23 @@
   .diag{font-size:12.5px;line-height:1.5;padding:7px 10px;border-radius:8px;background:var(--carta);border:1px solid var(--linha);margin-bottom:6px;color:var(--texto-2)}
   .diag.ok{color:var(--ok);border-color:#BFDECD;background:#F1F8F4}
   .diag.ruim{color:var(--alerta);border-color:#F0D3D0;background:#FDF3F2}
+  .historico{
+    background:var(--carta);border:1px solid var(--linha);border-radius:10px;
+    padding:4px 0;max-height:190px;overflow-y:auto;
+  }
+  .historico .ev{
+    padding:8px 12px;font-size:12.5px;color:var(--texto-2);line-height:1.4;
+    border-bottom:1px solid #F0F3F7;
+  }
+  .historico .ev:last-child{border-bottom:0}
+  .historico strong{color:var(--texto);font-weight:600}
+  .historico .qd{display:block;font-family:var(--mono);font-size:10px;color:#9AA6BE;margin-top:2px}
+  .pedido{
+    background:var(--carta);border:1px solid #E9D6A8;border-radius:11px;padding:12px;margin-bottom:9px;
+  }
+  .pedido .tit{font-size:14px;font-weight:500;margin-bottom:3px}
+  .pedido .qd{font-size:11.5px;color:var(--texto-2);line-height:1.45}
+  .cartao.pedido-del{border-style:dashed;border-color:var(--ambar)}
   .aviso{background:#FBF0DA;border:1px solid #E9D6A8;color:var(--ambar);border-radius:10px;padding:10px 12px;font-size:12px;margin-bottom:12px;line-height:1.5}
   .aviso.ruim{background:#FBE6E4;border-color:#F0D3D0;color:var(--alerta)}
   .aviso.bom{background:#E4F2EA;border-color:#BFDECD;color:var(--ok)}
@@ -345,9 +382,10 @@
    então duas pessoas podem mexer no quadro ao mesmo tempo.
    ============================================================ */
 
-const VERSAO_APP = 4;                   // sobe a cada versão nova do arquivo
+const VERSAO_APP = 7;                   // sobe a cada versão nova do arquivo
 const CHAVE_DOC = "gabinete-doc:v2";
 const CHAVE_CFG = "gabinete-cfg:v2";
+const CHAVE_SES = "gabinete-sessao:v1";
 const PALETA = ["#2A5D8F","#7A4E9C","#1B6B48","#B3261E","#A8710F","#4A5568","#0E7490","#9B3B6E"];
 const TOMBO = 45 * 86400000;           // tempo que os registros excluídos ficam guardados
 const RAPIDO = 3000;                   // checagem enquanto a pessoa está usando
@@ -356,8 +394,9 @@ const OCIO   = 120000;                 // tempo sem toque para considerar ocioso
 let ultimaAcao = Date.now();
 
 let estado = null;
-let cfg = { url:"", chave:"", quadro:"gabinete", senha:"", eu:"", lembrar:true };
-let vista = { pasta:null, modo:"quadro", busca:"", resp:null, buscaContato:"" };
+let cfg = { url:"", chave:"", quadro:"gabinete", senha:"", eu:"", lembrar:true, modo:"senha" };
+let sessao = null;   // { token, refresh, expira, email, nome, papel }
+let vista = { pasta:null, modo:"quadro", busca:"", resp:null, buscaContato:"", ocultarFeitas:false };
 let semArmazenamento = false;
 let salvamento = null;
 
@@ -420,7 +459,11 @@ function atendimentosDe(cid){
 }
 function digitando(){
   const a = document.activeElement;
-  return !!a && (a.tagName === "INPUT" || a.tagName === "TEXTAREA" || a.tagName === "SELECT");
+  if(!a || !/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return false;
+  // campo dentro de uma folha já fechada não conta como "está digitando"
+  const f = document.getElementById("folha");
+  if(f && f.contains(a) && !f.classList.contains("on")) return false;
+  return true;
 }
 const quem    = mid => (estado.membros || {})[mid];
 
@@ -448,6 +491,80 @@ function registrarMembro(){
 }
 
 function tocar(o){ o.mod = agora(); o.por = cfg.eu || ""; return o; }
+
+/** entrou numa coluna de encerramento: conclui. saiu de uma: reabre. */
+function ajustarFeito(c, colunaAntes){
+  const nova = estado.colunas[c.coluna];
+  const velha = colunaAntes ? estado.colunas[colunaAntes] : null;
+  if(nova && nova.final){ if(!c.feito) c.feito = agora(); return; }
+  if(velha && velha.final && c.feito) c.feito = 0;
+}
+
+function rotuloFeito(pastaId){
+  const p = estado.pastas[pastaId];
+  return /demanda|atendimento|solicita|of[ií]cio/i.test(p ? p.nome : "") ? "Resolvida" : "Concluída";
+}
+
+const pendentes = kid => cartoes(kid).filter(c => !c.feito);
+
+/* ---------- registro de quem fez o quê ---------- */
+const ACOES = { c:"criou", e:"editou", m:"moveu", f:"concluiu", r:"reabriu",
+                p:"pediu exclusão", x:"excluiu", n:"recusou a exclusão", v:"vinculou" };
+
+function registrar(alvo, acao, detalhe){
+  if(!alvo.hist) alvo.hist = [];
+  const ev = { q: cfg.eu || "sem nome", t: agora(), a: acao };
+  if(detalhe) ev.d = String(detalhe).slice(0,40);
+  alvo.hist.push(ev);
+  if(alvo.hist.length > 12) alvo.hist = alvo.hist.slice(-12);
+}
+function logar(texto){
+  estado.log = estado.log || [];
+  estado.log.push({ q: cfg.eu || "sem nome", t: agora(), d: String(texto).slice(0,90) });
+  if(estado.log.length > 60) estado.log = estado.log.slice(-60);
+}
+function unirEventos(a, b, max){
+  const vistos = {};
+  const todos = [].concat(a || [], b || []);
+  const fora = [];
+  todos.forEach(e => {
+    const ch = e.q + "|" + e.t + "|" + (e.a || "") + "|" + (e.d || "");
+    if(!vistos[ch]){ vistos[ch] = 1; fora.push(e); }
+  });
+  fora.sort((x,y) => x.t - y.t);
+  return fora.slice(-max);
+}
+function carimbo(ts){
+  const d = new Date(ts);
+  const p = n => String(n).padStart(2,"0");
+  return p(d.getDate())+"/"+p(d.getMonth()+1)+"/"+d.getFullYear()+" às "+p(d.getHours())+":"+p(d.getMinutes());
+}
+
+/* ---------- quem pode o quê ---------- */
+function souDono(){
+  if(cfg.modo === "login" && sessao) return sessao.papel === "responsavel";
+  const d = estado.dono;
+  if(!d) return true;                       // ninguém assumiu o quadro ainda
+  return idMembro(cfg.eu) === d;
+}
+function nomeDono(){
+  const m = quem(estado.dono);
+  return m ? m.nome : "";
+}
+function regraExclusao(){ return (estado.regras || {}).exclusao || "dono"; }
+function podeExcluir(alvo){
+  const r = regraExclusao();
+  if(r === "livre") return true;
+  if(souDono()) return true;
+  if(r === "autor") return !!alvo.criadoPor && alvo.criadoPor === idMembro(cfg.eu);
+  return false;
+}
+function pedidosAbertos(){
+  return [].concat(
+    vivas(estado.cartoes).filter(c => c.pedidoDel).map(c => ({ tipo:"tarefa", alvo:c })),
+    vivas(estado.contatos || {}).filter(c => c.pedidoDel).map(c => ({ tipo:"contato", alvo:c }))
+  );
+}
 
 function proximoN(){
   let m = 0;
@@ -539,8 +656,26 @@ function migrar(v){
 }
 
 /** completa campos que versões anteriores do arquivo não tinham */
+const NOME_FINAL = /conclu|encerr|resolv|arquiv|finaliz|entregue|atendid/i;
+
 function completar(doc){
   if(!doc.membros) doc.membros = {};
+  if(!doc.regras) doc.regras = { exclusao:"dono", mod:0 };
+  if(!doc.log) doc.log = [];
+  if(!doc.marcouFinal){
+    // primeira vez: descobre pelo nome quais colunas significam "acabou"
+    Object.values(doc.colunas || {}).forEach(k => {
+      if(k.final === undefined) k.final = NOME_FINAL.test(k.nome || "");
+    });
+    // e considera concluído o que já estava parado nessas colunas
+    Object.values(doc.cartoes || {}).forEach(c => {
+      if(c.feito === undefined){
+        const k = (doc.colunas || {})[c.coluna];
+        c.feito = (k && k.final) ? (c.mod || agora()) : 0;
+      }
+    });
+    doc.marcouFinal = true;
+  }
   if(!doc.contatos) doc.contatos = {};
   if(!doc.app) doc.app = { v:VERSAO_APP, mod:agora() };
   else if((doc.app.v || 0) < VERSAO_APP) doc.app = { v:VERSAO_APP, mod:agora() };
@@ -549,14 +684,17 @@ function completar(doc){
 }
 
 /* ------- mesclagem ------- */
-function fundirMapa(x, y){
+function fundirMapa(x, y, comHist){
   const out = {};
   const chaves = new Set(Object.keys(x||{}).concat(Object.keys(y||{})));
   chaves.forEach(k => {
     const a = (x||{})[k], b = (y||{})[k];
     if(!a){ out[k] = b; return; }
     if(!b){ out[k] = a; return; }
-    out[k] = (b.mod||0) > (a.mod||0) ? b : a;
+    const venceu = (b.mod||0) > (a.mod||0) ? b : a;
+    // o histórico é somado dos dois lados, senão a edição perdedora sumiria do registro
+    if(comHist && (a.hist || b.hist)) venceu.hist = unirEventos(a.hist, b.hist, 12);
+    out[k] = venceu;
   });
   return out;
 }
@@ -572,9 +710,12 @@ function fundir(local, remoto){
     marca:   ((remoto.marca||{}).mod||0) > ((local.marca||{}).mod||0) ? remoto.marca : (local.marca || remoto.marca),
     pastas:  fundirMapa(local.pastas,  remoto.pastas),
     colunas: fundirMapa(local.colunas, remoto.colunas),
-    cartoes: fundirMapa(local.cartoes, remoto.cartoes),
+    cartoes: fundirMapa(local.cartoes, remoto.cartoes, true),
     membros:  fundirMapa(local.membros  || {}, remoto.membros  || {}),
-    contatos: fundirMapa(local.contatos || {}, remoto.contatos || {})
+    contatos: fundirMapa(local.contatos || {}, remoto.contatos || {}, true),
+    dono:   ((remoto.regras||{}).mod||0) > ((local.regras||{}).mod||0) ? remoto.dono : (local.dono || remoto.dono),
+    regras: ((remoto.regras||{}).mod||0) > ((local.regras||{}).mod||0) ? remoto.regras : (local.regras || remoto.regras),
+    log:    unirEventos(local.log, remoto.log, 60)
   };
 }
 function limparTumulos(doc){
@@ -630,6 +771,94 @@ function mudou(){ if(estado) estado.virgem = false; salvarLocal(); Sinc.agendar(
 
 /* =================== sincronização =================== */
 
+/* =================== login por e-mail =================== */
+
+const Auth = {
+  base(){ return cfg.url.replace(/\/+$/,"") + "/auth/v1"; },
+
+  /** endereço para onde o link do e-mail deve devolver a pessoa */
+  volta(){
+    return (location.protocol === "http:" || location.protocol === "https:") && location.host
+      ? location.origin + location.pathname : "";
+  },
+
+  async pedirCodigo(email){
+    const v = this.volta();
+    const r = await fetch(this.base() + "/otp" + (v ? "?redirect_to=" + encodeURIComponent(v) : ""), {
+      method:"POST",
+      headers:{ "Content-Type":"application/json", "apikey":cfg.chave },
+      body: JSON.stringify({ email: String(email).trim().toLowerCase(), create_user: true })
+    });
+    const t = await r.text();
+    if(!r.ok) throw new Error(detalhe(t) || ("HTTP " + r.status));
+    return true;
+  },
+
+  async conferirCodigo(email, codigo){
+    const r = await fetch(this.base() + "/verify", {
+      method:"POST",
+      headers:{ "Content-Type":"application/json", "apikey":cfg.chave },
+      body: JSON.stringify({ email: String(email).trim().toLowerCase(), token: String(codigo).trim(), type:"email" })
+    });
+    const t = await r.text();
+    if(!r.ok) throw new Error(detalhe(t) || ("HTTP " + r.status));
+    const d = JSON.parse(t);
+    sessao = {
+      token: d.access_token, refresh: d.refresh_token,
+      expira: agora() + ((d.expires_in || 3600) * 1000) - 60000,
+      email: (d.user && d.user.email) || String(email).trim().toLowerCase(),
+      nome: "", papel: "membro"
+    };
+    return sessao;
+  },
+
+  async renovar(){
+    if(!sessao || !sessao.refresh) return false;
+    const r = await fetch(this.base() + "/token?grant_type=refresh_token", {
+      method:"POST",
+      headers:{ "Content-Type":"application/json", "apikey":cfg.chave },
+      body: JSON.stringify({ refresh_token: sessao.refresh })
+    });
+    const t = await r.text();
+    if(!r.ok){ sessao = null; return false; }
+    const d = JSON.parse(t || "{}");
+    sessao.token = d.access_token;
+    sessao.refresh = d.refresh_token || sessao.refresh;
+    sessao.expira = agora() + ((d.expires_in || 3600) * 1000) - 60000;
+    gravarLocal(CHAVE_SES, sessao);
+    return true;
+  },
+
+  /** com o token na mão, pergunta ao servidor de quem ele é */
+  async quemSou(){
+    if(!sessao) return null;
+    const r = await fetch(this.base() + "/user", {
+      headers:{ "apikey":cfg.chave, "Authorization":"Bearer " + sessao.token }
+    });
+    const t = await r.text();
+    if(!r.ok) return null;
+    const d = JSON.parse(t || "{}");
+    if(d.email) sessao.email = d.email;
+    return d.email || null;
+  },
+
+  async valido(){
+    if(!sessao) return false;
+    if(agora() < sessao.expira) return true;
+    return await this.renovar();
+  },
+
+  sair(){ sessao = null; gravarLocal(CHAVE_SES, null); }
+};
+
+/** cabecalhos com o token da pessoa quando o modo e login */
+function cabAuth(){
+  const c = { "Content-Type":"application/json", "apikey":cfg.chave };
+  if(cfg.modo === "login" && sessao) c["Authorization"] = "Bearer " + sessao.token;
+  else if(/^eyJ/.test(cfg.chave)) c["Authorization"] = "Bearer " + cfg.chave;
+  return c;
+}
+
 function cabecalhos(chave){
   // chave nova (sb_publishable_...) vai só no apikey;
   // a antiga (JWT, começa com eyJ) aceita também o Authorization
@@ -668,15 +897,109 @@ const Sinc = {
     pintarStatus();
   },
 
+  rest(caminho){ return cfg.url.replace(/\/+$/,"") + "/rest/v1/" + caminho; },
+
+  /** as três operações abaixo têm duas implementações: RPC com senha, ou REST com token */
+  async lerVersao(){
+    if(cfg.modo === "login"){
+      if(!await Auth.valido()) throw new Error("sessão expirada");
+      const r = await fetch(this.rest("quadros?id=eq." + encodeURIComponent(cfg.quadro) + "&select=versao"), { headers: cabAuth() });
+      const t = await r.text();
+      if(!r.ok) throw new Error(detalhe(t) || ("HTTP " + r.status));
+      const arr = JSON.parse(t || "[]");
+      return arr.length ? arr[0].versao : null;
+    }
+    return await this.rpc("versao_quadro", { p_id:cfg.quadro, p_senha:cfg.senha });
+  },
+
+  async lerTudo(){
+    if(cfg.modo === "login"){
+      if(!await Auth.valido()) throw new Error("sessão expirada");
+      const r = await fetch(this.rest("quadros?id=eq." + encodeURIComponent(cfg.quadro)
+        + "&select=dados,versao,atualizado_em,atualizado_por"), { headers: cabAuth() });
+      const t = await r.text();
+      if(!r.ok) throw new Error(detalhe(t) || ("HTTP " + r.status));
+      return JSON.parse(t || "[]");
+    }
+    return await this.rpc("ler_quadro", { p_id:cfg.quadro, p_senha:cfg.senha });
+  },
+
+  async gravarTudo(dados, versaoAtual){
+    if(cfg.modo === "login"){
+      if(!await Auth.valido()) throw new Error("sessão expirada");
+      const r = await fetch(this.rest("quadros?id=eq." + encodeURIComponent(cfg.quadro)
+        + "&versao=eq." + versaoAtual + "&select=versao"), {
+        method:"PATCH",
+        headers: Object.assign(cabAuth(), { "Prefer":"return=representation" }),
+        body: JSON.stringify({ dados: dados, versao: versaoAtual + 1,
+          atualizado_em: new Date().toISOString(), atualizado_por: cfg.eu || sessao.email })
+      });
+      const t = await r.text();
+      if(!r.ok) throw new Error(detalhe(t) || ("HTTP " + r.status));
+      const arr = JSON.parse(t || "[]");
+      return arr.length ? arr[0].versao : null;     // vazio = outra pessoa gravou antes
+    }
+    return await this.rpc("gravar_quadro", {
+      p_id:cfg.quadro, p_senha:cfg.senha, p_dados:dados, p_versao:versaoAtual, p_por:cfg.eu || "alguém"
+    });
+  },
+
+  async garantirQuadro(){
+    if(cfg.modo !== "login"){
+      await this.rpc("criar_quadro", { p_id:cfg.quadro, p_senha:cfg.senha });
+      return;
+    }
+    const arr = await this.lerTudo();
+    if(arr && arr.length) return;
+    const r = await fetch(this.rest("quadros"), {
+      method:"POST",
+      headers: Object.assign(cabAuth(), { "Prefer":"resolution=ignore-duplicates" }),
+      body: JSON.stringify({ id:cfg.quadro, dados:{}, versao:0 })
+    });
+    if(!r.ok){ const t = await r.text(); throw new Error(detalhe(t) || ("HTTP " + r.status)); }
+  },
+
+  /** traz a lista de autorizados e reflete na equipe do quadro */
+  async lerAutorizados(){
+    if(cfg.modo !== "login") return [];
+    const r = await fetch(this.rest("membros_autorizados?select=email,nome,papel"), { headers: cabAuth() });
+    const t = await r.text();
+    if(!r.ok) return [];
+    const lista = JSON.parse(t || "[]");
+    const meu = lista.find(m => String(m.email).toLowerCase() === String(sessao.email).toLowerCase());
+    if(meu){ sessao.nome = meu.nome; sessao.papel = meu.papel; cfg.eu = meu.nome; }
+    let mexeu = false;
+    estado.membros = estado.membros || {};
+    lista.forEach(m => {
+      const mid = idMembro(m.nome);
+      if(!mid) return;
+      const atual = estado.membros[mid];
+      if(!atual || atual.nome !== m.nome || atual.del){
+        estado.membros[mid] = { id:mid, nome:m.nome, visto:agora(), mod:agora() };
+        mexeu = true;
+      }
+    });
+    return mexeu ? lista : lista;
+  },
+
   async conectar(silencioso){
-    if(!cfg.url || !cfg.chave || !cfg.senha){ this.desligar(); return false; }
+    if(!cfg.url || !cfg.chave) { this.desligar(); return false; }
+    if(cfg.modo === "senha" && !cfg.senha){ this.desligar(); return false; }
+    if(cfg.modo === "login" && !(await Auth.valido())){
+      this.desligar();
+      if(!silencioso) folhaLogin();
+      return false;
+    }
     this.marcar("enviando");
     try{
-      await this.rpc("criar_quadro", { p_id:cfg.quadro, p_senha:cfg.senha });
-      const linhas = await this.rpc("ler_quadro", { p_id:cfg.quadro, p_senha:cfg.senha });
+      await this.lerAutorizados();
+      await this.garantirQuadro();
+      const linhas = await this.lerTudo();
       if(!linhas || !linhas.length){
-        this.marcar("erro","senha");
-        if(!silencioso) brinde("Senha do quadro não confere com a do servidor.");
+        this.marcar("erro", cfg.modo === "login" ? "acesso" : "senha");
+        if(!silencioso) brinde(cfg.modo === "login"
+          ? "Seu e-mail não está na lista de autorizados deste quadro."
+          : "Senha do quadro não confere com a do servidor.");
         return false;
       }
       const linha = linhas[0];
@@ -733,10 +1056,10 @@ const Sinc = {
     if(!this.ligado || this.ocupado) return;
     this.ocupado = true;
     try{
-      const v = await this.rpc("versao_quadro", { p_id:cfg.quadro, p_senha:cfg.senha });
-      if(v === null || v === undefined){ this.marcar("erro","senha"); this.ocupado = false; return; }
+      const v = await this.lerVersao();
+      if(v === null || v === undefined){ this.marcar("erro", cfg.modo === "login" ? "acesso" : "senha"); this.ocupado = false; return; }
       if(v === this.versao){ this.marcar("ok"); this.ocupado = false; return; }
-      const linhas = await this.rpc("ler_quadro", { p_id:cfg.quadro, p_senha:cfg.senha });
+      const linhas = await this.lerTudo();
       if(linhas && linhas.length){
         const linha = linhas[0];
         this.versao = linha.versao;
@@ -765,10 +1088,7 @@ const Sinc = {
     tentativa = tentativa || 0;
     this.ocupado = true;
     try{
-      const nova = await this.rpc("gravar_quadro", {
-        p_id:cfg.quadro, p_senha:cfg.senha, p_dados:Object.assign({}, estado, { virgem:undefined }),
-        p_versao:this.versao, p_por:cfg.eu || "alguém"
-      });
+      const nova = await this.gravarTudo(Object.assign({}, estado, { virgem:undefined }), this.versao);
       if(nova === null || nova === undefined){
         // outra pessoa gravou antes: baixa, mescla e tenta de novo
         this.ocupado = false;
@@ -801,7 +1121,9 @@ function pintarStatus(){
   if(Sinc.status === "enviando"){ ponto.classList.add("enviando"); txt.textContent = "Enviando…"; return; }
   if(Sinc.status === "erro"){
     ponto.classList.add("erro");
-    txt.textContent = Sinc.erro === "senha" ? "Senha recusada" : "Sem conexão · guardado aqui";
+    txt.textContent = Sinc.erro === "senha" ? "Senha recusada"
+      : Sinc.erro === "acesso" ? "Acesso não autorizado"
+      : "Sem conexão · guardado aqui";
     return;
   }
   ponto.classList.add("on");
@@ -866,7 +1188,7 @@ function desenharAbas(){
        + esc(m ? m.nome : "?") + ' ✕</button>';
   }
   pastas().forEach(p => {
-    const n = colunas(p.id).reduce((s,k) => s + cartoes(k.id).length, 0);
+    const n = colunas(p.id).reduce((s,k) => s + pendentes(k.id).length, 0);
     h += '<button class="aba" role="tab" data-pasta="'+p.id+'" aria-selected="'+(vista.modo==="quadro" && vista.pasta===p.id)+'">'
        + esc(p.nome) + '<span class="n">'+n+'</span></button>';
   });
@@ -879,7 +1201,9 @@ function desenharAbas(){
 
 function htmlCartao(c){
   const p = rotuloPrazo(c.prazo);
-  let h = '<article class="cartao'+(c.prioridade==="alta"?" alta":"")+'" data-cartao="'+c.id+'" style="--faixa:'+cor(c.etiqueta)+'" tabindex="0">';
+  let h = '<article class="cartao'+(c.prioridade==="alta"?" alta":"")+(c.feito?" feito":"")
+        + (c.pedidoDel?" pedido-del":"")
+        + '" data-cartao="'+c.id+'" style="--faixa:'+cor(c.etiqueta)+'" tabindex="0">';
   h += '<div class="tit">'+esc(c.titulo)+'</div><div class="pe">';
   h += '<span class="protocolo">Nº '+String(c.n||0).padStart(4,"0")+'</span>';
   if(c.etiqueta) h += '<span class="etiqueta">'+esc(c.etiqueta)+'</span>';
@@ -887,6 +1211,8 @@ function htmlCartao(c){
   if(c.notas) h += '<span class="nota">✎</span>';
   const pes = c.contatoId ? contato(c.contatoId) : null;
   if(pes && !pes.del) h += '<span class="vinculo">'+esc(String(pes.nome).split(/\s+/)[0])+'</span>';
+  h += '<button class="feito-bt'+(c.feito?" on":"")+'" data-feito="'+c.id+'" '
+     + 'aria-label="'+(c.feito?"Reabrir":"Marcar como concluída")+'" aria-pressed="'+(!!c.feito)+'">✓</button>';
   const r = c.resp ? quem(c.resp) : null;
   if(r && !r.del) h += '<span class="autor" style="background:'+cor(r.nome)+'" title="Responsável: '+esc(r.nome)+'">'+esc(iniciais(r.nome))+'</span>';
   h += '</div><span class="pega" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01"/></svg></span></article>';
@@ -898,9 +1224,13 @@ function desenharQuadro(){
   if(!vista.pasta){ document.getElementById("tela").innerHTML = '<div class="rolo"><div class="nada">Nenhuma pasta.<br>Toque em “+ Pasta” para criar a primeira.</div></div>'; return; }
   let h = '<div class="trilho" id="trilho">';
   colunas(vista.pasta).forEach(k => {
-    const cs = cartoes(k.id).filter(c => !vista.resp || c.resp === vista.resp);
+    const cs = cartoes(k.id)
+      .filter(c => !vista.resp || c.resp === vista.resp)
+      .filter(c => !vista.ocultarFeitas || !c.feito);
     h += '<section class="coluna" data-coluna="'+k.id+'">';
-    h += '<div class="cab"><h2>'+esc(k.nome)+'</h2><span class="qtd">'+cs.length+'</span>'
+    const abertos = cs.filter(x => !x.feito).length;
+    h += '<div class="cab"><h2>'+esc(k.nome)+'</h2><span class="qtd">'
+       + (k.final ? cs.length : abertos + (cs.length !== abertos ? "/" + cs.length : "")) + '</span>'
        + '<button class="mais" data-addcol="'+k.id+'" aria-label="Nova tarefa em '+esc(k.nome)+'">+</button></div>';
     h += '<div class="lista" data-lista="'+k.id+'">';
     if(!cs.length) h += '<div class="nada">'+(vista.resp
@@ -920,7 +1250,7 @@ function ondeEsta(c){
 }
 
 function desenharPrazos(){
-  const itens = vivas(estado.cartoes).filter(c => c.prazo && estado.colunas[c.coluna] && !estado.colunas[c.coluna].del)
+  const itens = vivas(estado.cartoes).filter(c => c.prazo && !c.feito && estado.colunas[c.coluna] && !estado.colunas[c.coluna].del)
                   .map(c => ({ c, d:diasAte(c.prazo) })).sort((a,b) => a.d - b.d);
   const grupos = [
     { t:"Vencidos", f:i => i.d < 0, u:true },
@@ -1034,7 +1364,14 @@ function abrirFolha(html){
   folha.innerHTML = '<div class="puxador"></div>' + html;
   veu.classList.add("on"); folha.classList.add("on");
 }
-function fecharFolha(){ veu.classList.remove("on"); folha.classList.remove("on"); }
+function fecharFolha(){
+  const a = document.activeElement;
+  if(a && a.blur && folha.contains(a)) a.blur();
+  veu.classList.remove("on");
+  folha.classList.remove("on");
+  // limpa o conteúdo depois da animação, para não deixar campos órfãos no DOM
+  setTimeout(() => { if(!folha.classList.contains("on")) folha.innerHTML = ""; }, 320);
+}
 veu.addEventListener("click", fecharFolha);
 
 function pedirTexto(titulo, valor, aoConfirmar){
@@ -1071,6 +1408,11 @@ function folhaCartao(cid, colunaPadrao){
     + '<input id="fEtiqueta" list="listaEtiquetas" value="'+esc(base.etiqueta)+'" placeholder="Parecer, PL, Obras…">'
     + '<datalist id="listaEtiquetas">'+[...etiquetas].map(t => '<option value="'+esc(t)+'">').join("")+'</datalist></div>'
     + '<div class="campo"><label for="fPrazo">Prazo</label><input id="fPrazo" type="date" value="'+esc(base.prazo)+'"></div></div>'
+    + '<div class="campo"><label>Situação</label><div class="segm" id="fFeito">'
+    + '<button type="button" data-f="0" aria-pressed="'+(!base.feito)+'">Em aberto</button>'
+    + '<button type="button" data-f="1" aria-pressed="'+(!!base.feito)+'">'+rotuloFeito(vista.pasta)+'</button></div>'
+    + (base.feito ? '<div class="dica">'+esc(rotuloFeito(vista.pasta))+' em '+carimbo(base.feito)+'.</div>' : '')
+    + '</div>'
     + '<div class="campo"><label>Prioridade</label><div class="segm" id="fPrio">'
     + '<button type="button" data-p="normal" aria-pressed="'+(base.prioridade!=="alta")+'">Normal</button>'
     + '<button type="button" data-p="alta" aria-pressed="'+(base.prioridade==="alta")+'">Alta</button></div></div>'
@@ -1090,11 +1432,19 @@ function folhaCartao(cid, colunaPadrao){
     + '</div>'
     + '<div class="campo"><label for="fLocal">Pasta e coluna</label><select id="fLocal">'+opc+'</select></div>'
     + '<div class="campo"><label for="fNotas">Anotações</label><textarea id="fNotas" placeholder="Fundamentos, prazos regimentais, contatos…">'+esc(base.notas)+'</textarea></div>'
+    + (c ? blocoHistorico(c) : '')
     + '<div class="acoes">'
-    + (c ? '<button class="btn perigo" id="fExcluir" aria-label="Excluir tarefa">✕</button>' : '')
+    + (c ? '<button class="btn perigo" id="fExcluir" aria-label="'+(podeExcluir(c)?"Excluir tarefa":"Pedir exclusão")+'">'
+           + (podeExcluir(c) ? "✕" : "⌛") + '</button>' : '')
     + '<button class="btn claro" data-fechar="1">Cancelar</button>'
     + '<button class="btn" id="fSalvar">'+(c ? "Salvar" : "Criar tarefa")+'</button></div>'
   );
+
+  document.getElementById("fFeito").addEventListener("click", e => {
+    const b = e.target.closest("button[data-f]");
+    if(!b) return;
+    [...e.currentTarget.children].forEach(x => x.setAttribute("aria-pressed", x === b));
+  });
 
   document.getElementById("fPrio").addEventListener("click", e => {
     const b = e.target.closest("button[data-p]");
@@ -1108,10 +1458,7 @@ function folhaCartao(cid, colunaPadrao){
     [...e.currentTarget.children].forEach(x => x.setAttribute("aria-pressed", x === b));
   });
 
-  if(c) document.getElementById("fExcluir").addEventListener("click", () => {
-    c.del = true; tocar(c);
-    fecharFolha(); mudou(); desenhar(); brinde("Tarefa excluída.");
-  });
+  if(c) document.getElementById("fExcluir").addEventListener("click", () => pedirOuExcluir(c, "tarefa", c.titulo));
 
   document.getElementById("fSalvar").addEventListener("click", () => {
     const titulo = document.getElementById("fTitulo").value.trim();
@@ -1126,18 +1473,30 @@ function folhaCartao(cid, colunaPadrao){
       notas: document.getElementById("fNotas").value.trim()
     };
     const destino = document.getElementById("fLocal").value;
+    const querFeito = document.querySelector('#fFeito button[aria-pressed="true"]').dataset.f === "1";
     if(c){
+      const colunaAntes = c.coluna;
       Object.assign(c, dados);
       if(c.coluna !== destino){
         c.coluna = destino;
         const primeiro = cartoes(destino)[0];
         c.ordem = primeiro ? primeiro.ordem - 1 : 0;
+        ajustarFeito(c, colunaAntes);
+        registrar(c, "m", (estado.colunas[destino] || {}).nome);
       }
+      if(querFeito && !c.feito){ c.feito = agora(); registrar(c, "f"); }
+      else if(!querFeito && c.feito){ c.feito = 0; registrar(c, "r"); }
+      else if(c.coluna === colunaAntes) registrar(c, "e");
       tocar(c);
     }else{
       const primeiro = cartoes(destino)[0];
-      const novo = Object.assign({ id:id("c"), coluna:destino, ordem: primeiro ? primeiro.ordem - 1 : 0, n:proximoN() }, dados);
+      const novo = Object.assign({
+        id:id("c"), coluna:destino, ordem: primeiro ? primeiro.ordem - 1 : 0, n:proximoN(),
+        feito: querFeito ? agora() : 0, criadoPor: idMembro(cfg.eu), criadoEm: agora()
+      }, dados);
       tocar(novo);
+      registrar(novo, "c");
+      ajustarFeito(novo, null);
       estado.cartoes[novo.id] = novo;
     }
     const k = estado.colunas[destino];
@@ -1199,8 +1558,10 @@ function folhaContato(cid){
     h += '</div><div class="acoes"><button class="btn claro" id="kNovoAtend">Abrir atendimento</button></div>';
   }
 
+  if(c) h += blocoHistorico(c);
   h += '<div class="acoes">'
-    + (c ? '<button class="btn perigo" id="kExcluir" aria-label="Excluir contato">✕</button>' : '')
+    + (c ? '<button class="btn perigo" id="kExcluir" aria-label="'+(podeExcluir(c)?"Excluir contato":"Pedir exclusão")+'">'
+           + (podeExcluir(c) ? "✕" : "⌛") + '</button>' : '')
     + '<button class="btn claro" data-fechar="1">Cancelar</button>'
     + '<button class="btn" id="kSalvar">'+(c ? "Salvar" : "Cadastrar")+'</button></div>';
 
@@ -1212,17 +1573,7 @@ function folhaContato(cid){
     [...e.currentTarget.children].forEach(x => x.setAttribute("aria-pressed", x === bt));
   });
 
-  if(c) document.getElementById("kExcluir").addEventListener("click", () => {
-    abrirFolha('<h2>Excluir contato</h2><p>Isso apaga <strong>'+esc(c.nome)+'</strong> do quadro de todo mundo. '
-      + (ligados.length ? 'Os '+ligados.length+' atendimentos continuam, só ficam sem contato ligado.' : '')+'</p>'
-      + '<div class="acoes"><button class="btn claro" data-fechar="1">Cancelar</button>'
-      + '<button class="btn" id="kConf" style="background:var(--alerta)">Excluir</button></div>');
-    document.getElementById("kConf").addEventListener("click", () => {
-      atendimentosDe(c.id).forEach(t => { t.contatoId = ""; tocar(t); });
-      c.del = true; tocar(c);
-      fecharFolha(); mudou(); desenhar(); brinde("Contato excluído.");
-    });
-  });
+  if(c) document.getElementById("kExcluir").addEventListener("click", () => pedirOuExcluir(c, "contato", c.nome));
 
   if(c) document.getElementById("kNovoAtend").addEventListener("click", () => {
     const p = pastaAtendimento();
@@ -1232,8 +1583,11 @@ function folhaContato(cid){
     const novo = tocar({
       id:id("c"), coluna:k.id, ordem: primeiro ? primeiro.ordem - 1 : 0, n:proximoN(),
       titulo:"Atendimento — "+c.nome, etiqueta:"Atendimento", prazo:"", prioridade:"normal",
-      notas:"", resp:"", contatoId:c.id
+      notas:"", resp:"", contatoId:c.id, feito:0,
+      criadoPor: idMembro(cfg.eu), criadoEm: agora()
     });
+    registrar(novo, "c");
+    registrar(novo, "v", c.nome);
     estado.cartoes[novo.id] = novo;
     vista.pasta = p.id; vista.modo = "quadro";
     fecharFolha(); mudou(); desenhar();
@@ -1253,15 +1607,148 @@ function folhaContato(cid){
       notas: document.getElementById("kNotas").value.trim()
     };
     if(c){
-      Object.assign(c, dados); tocar(c);
+      Object.assign(c, dados); registrar(c, "e"); tocar(c);
     }else{
-      const novo = tocar(Object.assign({ id:id("k"), criado:agora() }, dados));
+      const novo = tocar(Object.assign({ id:id("k"), criado:agora(),
+        criadoPor: idMembro(cfg.eu), criadoEm: agora() }, dados));
+      registrar(novo, "c");
       estado.contatos = estado.contatos || {};
       estado.contatos[novo.id] = novo;
     }
     fecharFolha(); mudou();
     vista.modo = "contatos"; desenhar();
   });
+}
+
+function blocoHistorico(alvo){
+  const h = (alvo.hist || []).slice().reverse();
+  if(!h.length && !alvo.criadoEm) return '';
+  let out = '<div class="campo"><label>Histórico</label><div class="historico">';
+  if(!h.length){
+    out += '<div class="ev">Sem registro de edições nesta versão.</div>';
+  }else{
+    h.forEach(e => {
+      out += '<div class="ev"><strong>'+esc(e.q)+'</strong> '+(ACOES[e.a] || "mexeu")
+           + (e.d ? ' para “'+esc(e.d)+'”' : '')
+           + '<span class="qd">'+carimbo(e.t)+'</span></div>';
+    });
+  }
+  out += '</div>';
+  if(alvo.pedidoDel){
+    out += '<div class="aviso">Exclusão pedida por <strong>'+esc(alvo.pedidoDel.q)+'</strong> em '
+         + carimbo(alvo.pedidoDel.t) + (alvo.pedidoDel.m ? ' — “'+esc(alvo.pedidoDel.m)+'”' : '')
+         + (souDono() ? '. Aprove ou recuse pelo menu, em Aprovações.' : '. Aguardando '+(nomeDono() || "o responsável")+'.')
+         + '</div>';
+  }
+  return out + '</div>';
+}
+
+/** exclui direto se a regra permitir; senão registra um pedido para o responsável decidir */
+function pedirOuExcluir(alvo, tipo, rotulo, aoTerminar){
+  const excluir = () => {
+    if(tipo === "contato") atendimentosDe(alvo.id).forEach(t => { t.contatoId = ""; tocar(t); });
+    alvo.del = true; delete alvo.pedidoDel;
+    registrar(alvo, "x"); tocar(alvo);
+    logar("excluiu " + tipo + " “" + rotulo + "”");
+    fecharFolha(); mudou(); desenhar(); brinde(tipo === "contato" ? "Contato excluído." : "Tarefa excluída.");
+    if(aoTerminar) aoTerminar();
+  };
+
+  if(podeExcluir(alvo)){
+    abrirFolha('<h2>Excluir '+tipo+'</h2><p>Isso apaga <strong>'+esc(rotulo)+'</strong> para todo mundo do quadro. '
+      + 'Fica registrado no histórico de quem apagou.</p>'
+      + '<div class="acoes"><button class="btn claro" data-fechar="1">Cancelar</button>'
+      + '<button class="btn" id="delConf" style="background:var(--alerta)">Excluir</button></div>');
+    document.getElementById("delConf").addEventListener("click", excluir);
+    return;
+  }
+
+  abrirFolha('<h2>Pedir exclusão</h2>'
+    + '<p>A regra deste quadro é que só '+(regraExclusao() === "autor" ? "quem criou" : (nomeDono() || "o responsável"))
+    + ' pode apagar. Seu pedido fica visível para '+(nomeDono() || "o responsável")+' aprovar.</p>'
+    + '<div class="campo"><label for="delMotivo">Motivo</label>'
+    + '<input id="delMotivo" placeholder="Ex.: duplicada, aberta por engano" autocomplete="off"></div>'
+    + '<div class="acoes"><button class="btn claro" data-fechar="1">Cancelar</button>'
+    + '<button class="btn" id="delPedir">Enviar pedido</button></div>');
+  document.getElementById("delPedir").addEventListener("click", () => {
+    alvo.pedidoDel = { q: cfg.eu || "sem nome", t: agora(), m: document.getElementById("delMotivo").value.trim() };
+    registrar(alvo, "p"); tocar(alvo);
+    logar("pediu exclusão de " + tipo + " “" + rotulo + "”");
+    fecharFolha(); mudou(); desenhar();
+    brinde("Pedido enviado para " + (nomeDono() || "o responsável") + ".");
+  });
+}
+
+function folhaAprovacoes(){
+  const lista = pedidosAbertos();
+  let h = '<h2>Aprovações pendentes</h2>';
+  if(!lista.length){
+    h += '<div class="nada">Nenhum pedido de exclusão em aberto.</div>';
+  }else if(!souDono()){
+    h += '<div class="aviso">Só '+(nomeDono() || "o responsável pelo quadro")+' pode decidir. Você consegue ver os pedidos, mas não aprovar.</div>';
+  }
+  lista.forEach(p => {
+    const nome = p.tipo === "contato" ? p.alvo.nome : p.alvo.titulo;
+    h += '<div class="pedido"><div class="tit">'+esc(nome)+'</div>'
+       + '<div class="qd">'+esc(p.tipo)+' · pedido por '+esc(p.alvo.pedidoDel.q)+' em '+carimbo(p.alvo.pedidoDel.t)+'</div>'
+       + (p.alvo.pedidoDel.m ? '<div class="qd">“'+esc(p.alvo.pedidoDel.m)+'”</div>' : '')
+       + (souDono() ? '<div class="acoes" style="margin-top:10px">'
+           + '<button class="btn claro" data-recusar="'+p.alvo.id+'">Recusar</button>'
+           + '<button class="btn" data-aprovar="'+p.alvo.id+'" style="background:var(--alerta)">Aprovar exclusão</button></div>' : '')
+       + '</div>';
+  });
+  abrirFolha(h + '<div class="acoes"><button class="btn claro" data-fechar="1">Fechar</button></div>');
+}
+
+function folhaPermissoes(){
+  const r = regraExclusao();
+  const eu = idMembro(cfg.eu);
+  const posso = souDono();
+  let h = '<h2>Permissões</h2>';
+  if(!estado.dono){
+    h += '<div class="aviso">Ninguém assumiu este quadro ainda. Quem salvar primeiro vira o responsável.</div>';
+  }else if(!posso){
+    h += '<div class="aviso">Só '+esc(nomeDono())+' pode mudar estas regras.</div>';
+  }
+  h += '<div class="campo"><label for="pDono">Responsável pelo quadro</label><select id="pDono"'+(posso?"":" disabled")+'>'
+     + '<option value="">— ninguém —</option>'
+     + equipe().map(m => '<option value="'+m.id+'"'+((estado.dono||eu)===m.id?" selected":"")+'>'+esc(m.nome)+'</option>').join("")
+     + '</select><div class="dica">Quem aprova exclusões e muda as regras.</div></div>';
+  h += '<div class="campo"><label>Quem pode excluir tarefas e contatos</label><div class="segm" id="pRegra" style="flex-direction:column">'
+     + '<button type="button" data-x="dono" aria-pressed="'+(r==="dono")+'"'+(posso?"":" disabled")+'>Só o responsável — os outros pedem autorização</button>'
+     + '<button type="button" data-x="autor" aria-pressed="'+(r==="autor")+'"'+(posso?"":" disabled")+'>Quem criou pode excluir o que criou</button>'
+     + '<button type="button" data-x="livre" aria-pressed="'+(r==="livre")+'"'+(posso?"":" disabled")+'>Qualquer um pode excluir</button>'
+     + '</div></div>';
+  h += '<div class="aviso">Isto organiza a equipe, não é tranca. Como todo mundo entra com a mesma senha e digita o próprio nome, '
+     + 'quem quiser contornar consegue. O que fica sempre é o registro de quem fez o quê.</div>';
+  if(posso) h += '<div class="acoes"><button class="btn claro" data-fechar="1">Cancelar</button>'
+     + '<button class="btn" id="pSalvar">Salvar</button></div>';
+  else h += '<div class="acoes"><button class="btn claro" data-fechar="1">Fechar</button></div>';
+  abrirFolha(h);
+
+  if(!posso) return;
+  document.getElementById("pRegra").addEventListener("click", e => {
+    const b = e.target.closest("button[data-x]");
+    if(!b) return;
+    [...e.currentTarget.children].forEach(x => x.setAttribute("aria-pressed", x === b));
+  });
+  document.getElementById("pSalvar").addEventListener("click", () => {
+    estado.dono = document.getElementById("pDono").value;
+    estado.regras = { exclusao: document.querySelector('#pRegra button[aria-pressed="true"]').dataset.x, mod: agora() };
+    logar("mudou as regras de exclusão para “" + estado.regras.exclusao + "”");
+    fecharFolha(); mudou(); desenhar(); brinde("Permissões atualizadas.");
+  });
+}
+
+function folhaLog(){
+  const l = (estado.log || []).slice().reverse();
+  let h = '<h2>Histórico do quadro</h2>';
+  if(!l.length) h += '<div class="nada">Nada registrado ainda.</div>';
+  else h += '<div class="historico">' + l.map(e =>
+    '<div class="ev"><strong>'+esc(e.q)+'</strong> '+esc(e.d)+'<span class="qd">'+carimbo(e.t)+'</span></div>').join("") + '</div>';
+  h += '<div class="dica">Guarda as 60 ações mais recentes de estrutura: pastas, colunas, exclusões e regras. '
+     + 'O histórico de cada tarefa fica dentro dela.</div>';
+  abrirFolha(h + '<div class="acoes"><button class="btn claro" data-fechar="1">Fechar</button></div>');
 }
 
 function folhaMenu(){
@@ -1275,6 +1762,14 @@ function folhaMenu(){
     + '<button class="item-menu" data-acao="renomear-coluna"><span class="marca-icone">≡</span><span>Renomear ou excluir coluna</span></button>'
     + '<button class="item-menu" data-acao="nova-pasta"><span class="marca-icone">＋</span><span>Nova pasta</span></button>'
     + '<button class="item-menu" data-acao="excluir-pasta"><span class="marca-icone">🗑</span><span>Excluir pasta atual</span></button>'
+    + (pedidosAbertos().length ? '<button class="item-menu" data-acao="aprovacoes" style="border-color:#E9D6A8;background:#FBF0DA">'
+        + '<span class="marca-icone" style="background:#F3E3BC">!</span><span>Aprovações pendentes<small>'
+        + pedidosAbertos().length + ' pedido' + (pedidosAbertos().length>1?"s":"") + ' de exclusão</small></span></button>' : '')
+    + '<button class="item-menu" data-acao="ocultar"><span class="marca-icone">'+(vista.ocultarFeitas?"☑":"☐")+'</span><span>'
+      + (vista.ocultarFeitas ? "Mostrar tarefas concluídas" : "Ocultar tarefas concluídas") + '</span></button>'
+    + '<button class="item-menu" data-acao="permissoes"><span class="marca-icone">⚿</span><span>Permissões<small>'
+      + (estado.dono ? "responsável: " + esc(nomeDono()) : "ninguém assumiu o quadro") + '</small></span></button>'
+    + '<button class="item-menu" data-acao="log"><span class="marca-icone">☷</span><span>Histórico do quadro</span></button>'
     + '<button class="item-menu" data-acao="equipe"><span class="marca-icone">☺</span><span>Equipe<small>'
       + (equipe().length ? equipe().map(m => esc(m.nome)).join(", ") : "ninguém registrado ainda") + '</small></span></button>'
     + '<button class="item-menu" data-acao="filtrar"><span class="marca-icone">⌕</span><span>'
@@ -1292,10 +1787,80 @@ function folhaColunas(){
   colunas(vista.pasta).forEach(k => {
     const n = cartoes(k.id).length;
     h += '<button class="item-menu" data-col="'+k.id+'"><span class="marca-icone">≡</span>'
-       + '<span style="flex:1">'+esc(k.nome)+'<small>'+n+' tarefa'+(n===1?"":"s")+'</small></span>'
-       + '<span style="color:var(--alerta)" data-del="'+k.id+'">✕</span></button>';
+       + '<span style="flex:1">'+esc(k.nome)+'<small>'+n+' tarefa'+(n===1?"":"s")
+       + (k.final ? ' · encerra' : '')+'</small></span>'
+       + '<span class="'+(k.final?"selo-final":"selo-aberto")+'" data-final="'+k.id+'">'
+       + (k.final ? '✓ encerra' : 'não encerra')+'</span>'
+       + '<span style="color:var(--alerta);margin-left:10px" data-del="'+k.id+'">✕</span></button>';
   });
+  h += '<div class="dica">Arrastar uma tarefa para uma coluna marcada como “encerra” já a dá por '
+     + esc(String(rotuloFeito(vista.pasta)).toLowerCase()) + '. Toque no selo para mudar.</div>';
   abrirFolha(h + '<div class="acoes"><button class="btn claro" data-fechar="1">Fechar</button></div>');
+}
+
+function folhaLogin(passo, email, erro){
+  passo = passo || "email";
+  if(passo === "email"){
+    abrirFolha(
+      '<h2>Entrar no quadro</h2>'
+      + '<p>Digite seu e-mail. Vamos mandar um código de 6 dígitos para confirmar que é você.</p>'
+      + (erro ? '<div class="aviso ruim">'+esc(erro)+'</div>' : '')
+      + '<div class="campo"><label for="lEmail">Seu e-mail</label>'
+      + '<input id="lEmail" type="email" value="'+esc(email || "")+'" placeholder="voce@exemplo.com.br" '
+      + 'autocapitalize="off" autocomplete="email" spellcheck="false"></div>'
+      + '<div class="acoes"><button class="btn claro" data-fechar="1">Cancelar</button>'
+      + '<button class="btn" id="lEnviar">Enviar código</button></div>'
+    );
+    const inp = document.getElementById("lEmail");
+    setTimeout(() => inp.focus(), 250);
+    document.getElementById("lEnviar").addEventListener("click", async () => {
+      const e = inp.value.trim();
+      if(!e || e.indexOf("@") < 1){ brinde("Digite um e-mail válido."); return; }
+      const bt = document.getElementById("lEnviar");
+      bt.textContent = "Enviando…"; bt.disabled = true;
+      try{ await Auth.pedirCodigo(e); folhaLogin("codigo", e); }
+      catch(err){ folhaLogin("email", e, String(err.message || err)); }
+    });
+    return;
+  }
+
+  abrirFolha(
+    '<h2>Código enviado</h2>'
+    + '<p>Procure na caixa de entrada de <strong>'+esc(email)+'</strong>. Confira o spam se demorar.</p>'
+    + '<div class="aviso">Chegou um <strong>link</strong> em vez de números? Também serve: toque no link do e-mail que você entra direto, sem precisar digitar nada aqui.</div>'
+    + (erro ? '<div class="aviso ruim">'+esc(erro)+'</div>' : '')
+    + '<div class="campo"><label for="lCodigo">Código</label>'
+    + '<input id="lCodigo" inputmode="numeric" maxlength="6" placeholder="000000" autocomplete="one-time-code" '
+    + 'style="font-family:var(--mono);font-size:22px;letter-spacing:.3em;text-align:center"></div>'
+    + '<div class="acoes"><button class="btn claro" id="lVoltar">Trocar e-mail</button>'
+    + '<button class="btn" id="lEntrar">Entrar</button></div>'
+    + '<div class="acoes"><button class="btn claro" id="lReenviar">Reenviar código</button></div>'
+  );
+  const inp = document.getElementById("lCodigo");
+  setTimeout(() => inp.focus(), 250);
+  const entrar = async () => {
+    const cod = inp.value.trim();
+    if(cod.length < 6){ brinde("O código tem 6 dígitos."); return; }
+    const bt = document.getElementById("lEntrar");
+    bt.textContent = "Conferindo…"; bt.disabled = true;
+    try{
+      await Auth.conferirCodigo(email, cod);
+      cfg.modo = "login";
+      await gravarLocal(CHAVE_SES, sessao);
+      await gravarLocal(CHAVE_CFG, Object.assign({}, cfg, { senha:"" }));
+      fecharFolha();
+      const ok = await Sinc.conectar(false);
+      desenhar();
+      if(ok) brinde("Você entrou como " + (cfg.eu || sessao.email) + ".");
+    }catch(err){ folhaLogin("codigo", email, String(err.message || err)); }
+  };
+  document.getElementById("lEntrar").addEventListener("click", entrar);
+  inp.addEventListener("keydown", ev => { if(ev.key === "Enter") entrar(); });
+  document.getElementById("lVoltar").addEventListener("click", () => folhaLogin("email", email));
+  document.getElementById("lReenviar").addEventListener("click", async () => {
+    try{ await Auth.pedirCodigo(email); brinde("Código reenviado."); }
+    catch(err){ brinde(String(err.message || err)); }
+  });
 }
 
 function folhaSinc(){
@@ -1303,7 +1868,10 @@ function folhaSinc(){
   abrirFolha(
     '<h2>Sincronização e equipe</h2>'
     + (conectado
-        ? '<div class="aviso bom">Conectado ao quadro <strong>'+esc(cfg.quadro)+'</strong>. Todo mundo que abrir com o mesmo endereço, chave e senha vê e edita o mesmo quadro.</div>'
+        ? '<div class="aviso bom">Conectado ao quadro <strong>'+esc(cfg.quadro)+'</strong>. '
+          + (cfg.modo === "login"
+              ? 'Cada pessoa entra com o próprio e-mail, e só quem está na lista de autorizados enxerga alguma coisa.'
+              : 'Todo mundo que abrir com o mesmo endereço, chave e senha vê e edita o mesmo quadro.') + '</div>'
         : '<p>Sem isso, o quadro funciona normalmente, só que apenas neste aparelho. Ligando, o gabinete inteiro trabalha no mesmo quadro — e a mesclagem é por cartão, então ninguém apaga a edição do outro.</p>'
           + '<ol class="passos">'
           + '<li>Crie um projeto grátis no Supabase — escolha a região <strong>South America (São Paulo)</strong> para manter os dados no Brasil.</li>'
@@ -1311,11 +1879,20 @@ function folhaSinc(){
           + '<li>Em <em>Settings → API Keys</em>, copie a <em>Publishable key</em> (<code>sb_publishable_…</code>). A <em>Project URL</em> está em <em>Settings → API</em> ou no botão <em>Connect</em>.</li>'
           + '<li>Preencha abaixo e escolha uma senha do quadro. Ela protege os dados: a chave publicável sozinha não abre nada.</li>'
           + '<li>Repita os mesmos dados no celular de cada pessoa da equipe.</li></ol>')
+    + '<div class="campo"><label>Como a equipe entra</label><div class="segm" id="sModo" style="flex-direction:column">'
+    + '<button type="button" data-m="senha" aria-pressed="'+(cfg.modo!=="login")+'">Senha compartilhada — todos usam a mesma</button>'
+    + '<button type="button" data-m="login" aria-pressed="'+(cfg.modo==="login")+'">Login por e-mail — cada um com o seu</button>'
+    + '</div><div class="dica">O login por e-mail exige rodar o <code>supabase-login-setup.sql</code> e cadastrar os e-mails da equipe.</div></div>'
+    + (cfg.modo === "login" && sessao
+        ? '<div class="aviso bom">Você entrou como <strong>'+esc(sessao.email)+'</strong>'
+          + (sessao.papel === "responsavel" ? " (responsável)" : "") + '.</div>'
+        : '')
     + '<div class="campo"><label for="sUrl">Endereço do projeto</label><input id="sUrl" value="'+esc(cfg.url)+'" placeholder="https://xxxxxxxx.supabase.co" autocapitalize="off" autocomplete="off" spellcheck="false"></div>'
     + '<div class="campo"><label for="sChave">Chave publicável</label><input id="sChave" value="'+esc(cfg.chave)+'" placeholder="sb_publishable_…" autocapitalize="off" autocomplete="off" spellcheck="false"></div>'
     + '<div class="duo"><div class="campo"><label for="sQuadro">Quadro</label><input id="sQuadro" value="'+esc(cfg.quadro)+'" placeholder="gabinete" autocapitalize="off"></div>'
-    + '<div class="campo"><label for="sEu">Seu nome</label><input id="sEu" value="'+esc(cfg.eu)+'" placeholder="Matheus"></div></div>'
-    + '<div class="campo"><label for="sSenha">Senha do quadro</label><input id="sSenha" type="password" value="'+esc(cfg.senha)+'" autocomplete="off">'
+    + '<div class="campo"><label for="sEu">Seu nome</label><input id="sEu" value="'+esc(cfg.eu)+'" placeholder="Matheus"'
+    + (cfg.modo === "login" && sessao ? ' readonly title="Vem do cadastro da equipe"' : '')+'></div></div>'
+    + '<div class="campo" id="campoSenha"'+(cfg.modo==="login"?' style="display:none"':'')+'><label for="sSenha">Senha do quadro</label><input id="sSenha" type="password" value="'+esc(cfg.senha)+'" autocomplete="off">'
     + '<div class="dica">Combinada entre a equipe. Na primeira conexão ela é gravada no servidor; depois, quem errar a senha não lê nada.</div></div>'
     + '<div class="campo"><label>Guardar a senha neste aparelho</label><div class="segm" id="sLembrar">'
     + '<button type="button" data-l="1" aria-pressed="'+(cfg.lembrar!==false)+'">Sim</button>'
@@ -1327,7 +1904,43 @@ function folhaSinc(){
     + '<button class="btn" id="sConectar">'+(conectado ? "Salvar e sincronizar" : "Conectar")+'</button></div>'
     + (conectado ? '<div class="acoes"><button class="btn claro" id="sAgora">Sincronizar agora</button>'
                  + '<button class="btn claro" id="sConvite">Convidar a equipe</button></div>' : '')
+    + (cfg.modo === "login"
+        ? '<div class="acoes">' + (sessao
+            ? '<button class="btn claro" id="sSair">Sair desta conta</button>'
+            : '<button class="btn" id="sEntrar">Entrar com e-mail</button>') + '</div>'
+        : '')
   );
+
+  const modoBt = document.getElementById("sModo");
+  if(modoBt) modoBt.addEventListener("click", e => {
+    const b = e.target.closest("button[data-m]");
+    if(!b || b.dataset.m === cfg.modo) return;
+    // guarda o que já foi digitado e redesenha a tela no modo escolhido
+    cfg.url = document.getElementById("sUrl").value.trim();
+    cfg.chave = document.getElementById("sChave").value.trim();
+    cfg.quadro = document.getElementById("sQuadro").value.trim() || "gabinete";
+    const cn = document.getElementById("sEu");
+    if(cn && !cn.readOnly) cfg.eu = cn.value.trim();
+    cfg.modo = b.dataset.m;
+    folhaSinc();
+  });
+
+  const entrarBt = document.getElementById("sEntrar");
+  if(entrarBt) entrarBt.addEventListener("click", async () => {
+    cfg.url = document.getElementById("sUrl").value.trim();
+    cfg.chave = document.getElementById("sChave").value.trim();
+    cfg.quadro = document.getElementById("sQuadro").value.trim() || "gabinete";
+    cfg.modo = "login";
+    if(!cfg.url || !cfg.chave){ brinde("Preencha o endereço e a chave primeiro."); return; }
+    await gravarLocal(CHAVE_CFG, Object.assign({}, cfg, { senha:"" }));
+    folhaLogin("email", "");
+  });
+
+  const sairBt = document.getElementById("sSair");
+  if(sairBt) sairBt.addEventListener("click", () => {
+    Auth.sair(); Sinc.desligar();
+    fecharFolha(); desenhar(); brinde("Você saiu. Os dados continuam neste aparelho.");
+  });
 
   document.getElementById("sLembrar").addEventListener("click", e => {
     const b = e.target.closest("button[data-l]");
@@ -1345,7 +1958,14 @@ function folhaSinc(){
     cfg.eu = document.getElementById("sEu").value.trim();
     cfg.senha = document.getElementById("sSenha").value;
     cfg.lembrar = document.querySelector('#sLembrar button[aria-pressed="true"]').dataset.l === "1";
-    if(!cfg.url || !cfg.chave || !cfg.senha){ brinde("Preencha endereço, chave e senha."); return; }
+    cfg.modo = document.querySelector('#sModo button[aria-pressed="true"]').dataset.m;
+    if(!cfg.url || !cfg.chave){ brinde("Preencha o endereço e a chave."); return; }
+    if(cfg.modo === "senha" && !cfg.senha){ brinde("Preencha a senha do quadro."); return; }
+    if(cfg.modo === "login" && !sessao){
+      await gravarLocal(CHAVE_CFG, Object.assign({}, cfg, { senha:"" }));
+      folhaLogin("email", "");
+      return;
+    }
     await gravarLocal(CHAVE_CFG, Object.assign({}, cfg, { senha: cfg.lembrar ? cfg.senha : "" }));
     fecharFolha();
     const ok = await Sinc.conectar(false);
@@ -1484,6 +2104,24 @@ function linkConvite(){
   return { frag, base, link: base ? base + frag : "", hospedado };
 }
 
+/** o link do e-mail devolve a pessoa com os tokens no fim do endereço */
+function lerTokenDoLink(){
+  const h = location.hash || "";
+  if(h.indexOf("access_token=") < 0) return null;
+  const p = {};
+  h.replace(/^#/, "").split("&").forEach(par => {
+    const i = par.indexOf("=");
+    if(i > 0) p[par.slice(0,i)] = decodeURIComponent(par.slice(i+1));
+  });
+  if(!p.access_token) return null;
+  return {
+    token: p.access_token,
+    refresh: p.refresh_token || "",
+    expira: agora() + ((parseInt(p.expires_in,10) || 3600) * 1000) - 60000,
+    email: "", nome: "", papel: "membro"
+  };
+}
+
 function lerConvite(){
   const m = /[#&]g=([^&]+)/.exec(location.hash || "");
   if(!m) return null;
@@ -1580,6 +2218,7 @@ function criarPasta(){
       estado.colunas[k.id] = k;
     });
     vista.pasta = p.id; vista.modo = "quadro";
+    logar("criou a pasta “" + v + "”");
     mudou(); desenhar();
   });
 }
@@ -1593,25 +2232,34 @@ document.addEventListener("click", e => {
     const a = item.dataset.acao;
     const p = vista.pasta ? estado.pastas[vista.pasta] : null;
     if(a === "sinc") folhaSinc();
-    if(a === "renomear-pasta" && p) pedirTexto("Nome da pasta", p.nome, v => { p.nome = v; tocar(p); mudou(); desenhar(); });
+    if(a === "renomear-pasta" && p) pedirTexto("Nome da pasta", p.nome, v => {
+      logar("renomeou a pasta “" + p.nome + "” para “" + v + "”");
+      p.nome = v; tocar(p); mudou(); desenhar();
+    });
     if(a === "nova-coluna" && p) pedirTexto("Nome da coluna", "", v => {
       const ordem = (colunas(p.id).slice(-1)[0] || { ordem:-1 }).ordem + 1;
-      const k = tocar({ id:id("k"), pasta:p.id, nome:v, ordem });
-      estado.colunas[k.id] = k; mudou(); desenhar();
+      const k = tocar({ id:id("k"), pasta:p.id, nome:v, ordem, final:NOME_FINAL.test(v) });
+      estado.colunas[k.id] = k; logar("criou a coluna “" + v + "” em " + p.nome); mudou(); desenhar();
     });
     if(a === "renomear-coluna") folhaColunas();
     if(a === "equipe") folhaEquipe();
+    if(a === "aprovacoes") folhaAprovacoes();
+    if(a === "permissoes") folhaPermissoes();
+    if(a === "log") folhaLog();
+    if(a === "ocultar"){ vista.ocultarFeitas = !vista.ocultarFeitas; fecharFolha(); desenhar(); }
     if(a === "filtrar") folhaFiltro();
     if(a === "marca") folhaMarca();
     if(a === "nova-pasta") criarPasta();
+    if(a === "excluir-pasta" && p && !souDono()){ brinde("Só " + (nomeDono() || "o responsável") + " pode excluir pastas."); return; }
     if(a === "excluir-pasta" && p){
-      const n = colunas(p.id).reduce((s,k) => s + cartoes(k.id).length, 0);
+      const n = colunas(p.id).reduce((s,k) => s + pendentes(k.id).length, 0);
       abrirFolha('<h2>Excluir pasta</h2><p>Isso apaga <strong>'+esc(p.nome)+'</strong> e '+n+' tarefa'+(n===1?"":"s")+' para todo mundo do quadro.</p>'
         + '<div class="acoes"><button class="btn claro" data-fechar="1">Cancelar</button>'
         + '<button class="btn" id="confDel" style="background:var(--alerta)">Excluir</button></div>');
       document.getElementById("confDel").addEventListener("click", () => {
         colunas(p.id).forEach(k => { cartoes(k.id).forEach(c => { c.del = true; tocar(c); }); k.del = true; tocar(k); });
         p.del = true; tocar(p);
+        logar("excluiu a pasta “" + p.nome + "”");
         vista.pasta = null; fecharFolha(); mudou(); desenhar(); brinde("Pasta excluída.");
       });
     }
@@ -1647,6 +2295,43 @@ document.addEventListener("click", e => {
     return;
   }
 
+  const aprovar = e.target.closest("[data-aprovar]");
+  if(aprovar){
+    const alvo = estado.cartoes[aprovar.dataset.aprovar] || (estado.contatos || {})[aprovar.dataset.aprovar];
+    if(alvo && souDono()){
+      const tipo = estado.cartoes[aprovar.dataset.aprovar] ? "tarefa" : "contato";
+      if(tipo === "contato") atendimentosDe(alvo.id).forEach(t => { t.contatoId = ""; tocar(t); });
+      alvo.del = true; delete alvo.pedidoDel;
+      registrar(alvo, "x"); tocar(alvo);
+      logar("aprovou a exclusão de " + tipo + " “" + (alvo.titulo || alvo.nome) + "”");
+      mudou(); desenhar(); folhaAprovacoes(); brinde("Exclusão aprovada.");
+    }
+    return;
+  }
+  const recusar = e.target.closest("[data-recusar]");
+  if(recusar){
+    const alvo = estado.cartoes[recusar.dataset.recusar] || (estado.contatos || {})[recusar.dataset.recusar];
+    if(alvo && souDono()){
+      delete alvo.pedidoDel;
+      registrar(alvo, "n"); tocar(alvo);
+      logar("recusou a exclusão de “" + (alvo.titulo || alvo.nome) + "”");
+      mudou(); desenhar(); folhaAprovacoes(); brinde("Pedido recusado.");
+    }
+    return;
+  }
+
+  const feitoBt = e.target.closest("[data-feito]");
+  if(feitoBt){
+    e.stopPropagation();
+    const c = estado.cartoes[feitoBt.dataset.feito];
+    if(c){
+      if(c.feito){ c.feito = 0; registrar(c, "r"); }
+      else { c.feito = agora(); registrar(c, "f"); }
+      tocar(c); mudou(); desenhar();
+    }
+    return;
+  }
+
   const tirar = e.target.closest("[data-tirar]");
   if(tirar){
     e.stopPropagation();
@@ -1669,13 +2354,28 @@ document.addEventListener("click", e => {
     return;
   }
 
+  const finalBt = e.target.closest("[data-final]");
+  if(finalBt){
+    e.stopPropagation();
+    const k = estado.colunas[finalBt.dataset.final];
+    if(k){
+      k.final = !k.final; tocar(k);
+      cartoes(k.id).forEach(c => { ajustarFeito(c, k.final ? null : k.id); tocar(c); });
+      logar((k.final ? "marcou" : "desmarcou") + " a coluna “" + k.nome + "” como encerramento");
+      mudou(); desenhar(); folhaColunas();
+    }
+    return;
+  }
+
   const del = e.target.closest("[data-del]");
   if(del){
     e.stopPropagation();
     const k = estado.colunas[del.dataset.del];
+    if(!souDono()){ brinde("Só " + (nomeDono() || "o responsável") + " pode excluir colunas."); return; }
     if(colunas(vista.pasta).length < 2){ brinde("Mantenha ao menos uma coluna."); return; }
     cartoes(k.id).forEach(c => { c.del = true; tocar(c); });
     k.del = true; tocar(k);
+    logar("excluiu a coluna “" + k.nome + "”");
     mudou(); desenhar(); folhaColunas();
     return;
   }
@@ -1866,10 +2566,16 @@ function soltar(){
     const i = irmaos.indexOf(lugar);
     const antes  = i > 0 ? irmaos[i-1].dataset.cartao : null;
     const depois = i < irmaos.length - 1 ? irmaos[i+1].dataset.cartao : null;
+    const colunaAntes = c.coluna;
     c.coluna = kid;
     let o = ordemEntre(antes, depois);
     if(o === null){ renumerar(kid); o = ordemEntre(antes, depois); }
     c.ordem = (o === null ? 0 : o);
+    if(colunaAntes !== kid){
+      const eraFinal = (estado.colunas[colunaAntes] || {}).final;
+      ajustarFeito(c, colunaAntes);
+      registrar(c, (c.feito && !eraFinal) ? "f" : "m", estado.colunas[kid].nome);
+    }
     tocar(c);
     mudou();
   }
@@ -1897,8 +2603,11 @@ document.addEventListener("keydown", e => {
   const alvo = ks[atual + (e.key === "ArrowRight" ? 1 : -1)];
   if(!alvo) return;
   const primeiro = cartoes(alvo.id)[0];
+  const colunaAntes = c.coluna;
   c.coluna = alvo.id;
   c.ordem = primeiro ? primeiro.ordem - 1 : 0;
+  ajustarFeito(c, colunaAntes);
+  registrar(c, "m", alvo.nome);
   tocar(c); mudou(); desenhar();
   const novo = document.querySelector('[data-cartao="'+c.id+'"]');
   if(novo){ novo.focus(); novo.scrollIntoView({ block:"nearest", inline:"center" }); }
@@ -1914,9 +2623,26 @@ document.addEventListener("keydown", e => {
 
   const c = await lerLocal(CHAVE_CFG);
   if(c) cfg = Object.assign(cfg, c);
+  const ses = await lerLocal(CHAVE_SES);
+  if(ses && ses.refresh) sessao = ses;
 
   ajustarVista();
   desenhar();
+
+  const doLink = lerTokenDoLink();
+  if(doLink && cfg.url && cfg.chave){
+    sessao = doLink;
+    cfg.modo = "login";
+    try{ history.replaceState(null, "", location.pathname + location.search); }catch(e){}
+    await Auth.quemSou();
+    await gravarLocal(CHAVE_SES, sessao);
+    await gravarLocal(CHAVE_CFG, Object.assign({}, cfg, { senha:"" }));
+    desenhar();
+    const entrou = await Sinc.conectar(false);
+    desenhar();
+    brinde(entrou ? ("Você entrou como " + (cfg.eu || sessao.email) + ".") : "Entrou, mas o e-mail não está autorizado.");
+    return;
+  }
 
   const convite = lerConvite();
   if(convite && convite.u && convite.k && !cfg.url){
@@ -1925,7 +2651,11 @@ document.addEventListener("keydown", e => {
     folhaSinc();
     brinde("Convite recebido. Falta seu nome e a senha do quadro.");
   }else if(cfg.url && cfg.chave){
-    if(cfg.senha){ Sinc.conectar(true); }
+    if(cfg.modo === "login"){
+      if(sessao) Sinc.conectar(true);
+      else folhaLogin("email", "");
+    }
+    else if(cfg.senha){ Sinc.conectar(true); }
     else { brinde("Digite a senha do quadro para sincronizar."); folhaSinc(); }
   }
   if(semArmazenamento) brinde("Sessão sem salvamento automático. Exporte backups.");
