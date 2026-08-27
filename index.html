@@ -121,7 +121,9 @@
     position:relative;background:var(--carta);border-radius:10px;border:1px solid var(--linha);
     box-shadow:0 1px 2px rgba(14,27,54,.06);padding:11px 12px 10px 15px;
     display:flex;flex-direction:column;gap:7px;touch-action:manipulation;
+    -webkit-user-select:none; user-select:none; -webkit-touch-callout:none;
   }
+  .cartao *{ -webkit-user-select:none; user-select:none; }
   .cartao::before{
     content:"";position:absolute;left:0;top:0;bottom:0;width:4px;
     border-radius:10px 0 0 10px;background:var(--faixa,var(--linha));
@@ -323,6 +325,120 @@
     flex:0 0 auto;background:var(--ouro);color:var(--tinta);
     font-size:12.5px;font-weight:700;padding:7px 13px;border-radius:9px;
   }
+  /* ---------- ordenar pastas ---------- */
+  .ordenavel{margin-bottom:6px}
+  .item-ord{
+    display:flex;align-items:center;gap:2px;background:var(--carta);border:1px solid var(--linha);
+    border-radius:11px;margin-bottom:8px;padding:4px 6px 4px 4px;
+  }
+  .item-ord.flutuando{
+    position:fixed;z-index:210;pointer-events:none;
+    box-shadow:0 12px 28px rgba(14,27,54,.28);border-color:var(--ouro);
+  }
+  .item-ord .punho{
+    flex:0 0 40px;height:44px;display:grid;place-items:center;color:#C3CCDC;
+    font-size:15px;cursor:grab;touch-action:none;
+  }
+  .item-ord .nome{
+    flex:1;text-align:left;padding:8px 4px;font-size:14.5px;min-width:0;
+  }
+  .item-ord .nome small{display:block;font-size:11.5px;color:var(--texto-2)}
+  .item-ord .elo{
+    flex:0 0 40px;height:40px;border-radius:9px;display:grid;place-items:center;
+    color:#C3CCDC;font-size:15px;
+  }
+  .item-ord .elo.on{color:var(--ouro)}
+  .vago-ord{
+    border:1.5px dashed var(--ouro);background:rgba(200,166,60,.09);
+    border-radius:11px;margin-bottom:8px;
+  }
+
+  /* ---------- links do Drive ---------- */
+  .cartao .drive{
+    display:inline-flex;align-items:center;gap:4px;max-width:100%;
+    font-size:10.5px;color:var(--tinta-3);background:#EEF1F6;
+    padding:2px 7px;border-radius:20px;text-decoration:none;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .faixa-drive{
+    display:flex;align-items:center;gap:8px;margin:0 14px 10px;
+    background:var(--carta);border:1px solid var(--linha);border-radius:11px;
+    padding:10px 12px;text-decoration:none;color:var(--texto);font-size:13px;font-weight:500;
+  }
+  .faixa-drive span{
+    margin-left:auto;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ouro);font-weight:700;
+  }
+
+  /* ---------- calendário ---------- */
+  .cal{background:var(--carta);border:1px solid var(--linha);border-radius:13px;padding:10px;margin-bottom:16px}
+  .cal-topo{display:flex;align-items:center;justify-content:space-between;padding:2px 4px 10px}
+  .cal-topo span{font-size:13px;font-weight:600;text-transform:capitalize}
+  .cal-topo .nav{
+    width:34px;height:34px;border-radius:9px;font-size:19px;color:var(--tinta-3);
+    display:grid;place-items:center;
+  }
+  .cal-grade{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+  .cal-ds{
+    text-align:center;font-size:9.5px;font-weight:700;letter-spacing:.06em;
+    color:var(--texto-2);padding-bottom:4px;
+  }
+  .cal-vazio{aspect-ratio:1}
+  .cal-dia{
+    aspect-ratio:1;border-radius:9px;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:2px;font-size:13px;color:var(--texto);
+    border:1px solid transparent;
+  }
+  .cal-dia .n{line-height:1}
+  .cal-dia .pt{
+    font-size:8px;line-height:1;color:#fff;background:var(--tinta-3);
+    min-width:14px;height:14px;border-radius:7px;display:grid;place-items:center;padding:0 3px;
+  }
+  .cal-dia.tem{background:#EEF1F6;font-weight:600}
+  .cal-dia.tem .pt{background:var(--ambar)}
+  .cal-dia.vencido{background:#FBE6E4;color:var(--alerta);font-weight:700}
+  .cal-dia.vencido .pt{background:var(--alerta)}
+  .cal-dia.hoje{border-color:var(--ouro);font-weight:700}
+  .cal-dia.sel{background:var(--tinta);color:#fff}
+  .cal-dia.sel .pt{background:var(--ouro);color:var(--tinta)}
+
+  /* ---------- verba ---------- */
+  .verba-caixa{
+    background:var(--tinta);color:#fff;border-radius:15px;padding:15px 16px 14px;margin-bottom:16px;
+  }
+  .verba-caixa .linha1{display:flex;align-items:center;margin-bottom:9px}
+  .verba-caixa .rot{
+    flex:1;font-size:10px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:rgba(255,255,255,.55);
+  }
+  .verba-caixa .editar{
+    font-family:var(--mono);font-size:13px;font-weight:700;color:var(--ouro);
+    border:1px solid rgba(200,166,60,.4);border-radius:8px;padding:4px 9px;
+  }
+  .verba-caixa .barra{height:7px;border-radius:4px;background:rgba(255,255,255,.15);overflow:hidden}
+  .verba-caixa .cheio{height:100%;background:var(--ouro);border-radius:4px}
+  .verba-caixa .cheio.estourou{background:#E4796F}
+  .verba-caixa .linha2{display:flex;margin-top:12px;gap:6px}
+  .verba-caixa .linha2 > div{flex:1;text-align:center}
+  .verba-caixa .n{display:block;font-family:var(--mono);font-size:14px;font-weight:700}
+  .verba-caixa .n.ruim{color:#E4796F}
+  .verba-caixa .r{
+    display:block;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-top:2px;
+  }
+  .cat-linha{display:flex;align-items:center;gap:9px;padding:7px 2px}
+  .cat-linha .cn{flex:0 0 40%;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cat-linha .cb{flex:1;height:6px;border-radius:3px;background:#E4E9F0;overflow:hidden}
+  .cat-linha .cb span{display:block;height:100%;border-radius:3px}
+  .cat-linha .cv{font-family:var(--mono);font-size:11.5px;color:var(--texto-2)}
+  .linha-item .valor{font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--tinta)}
+
+  /* ---------- logo ---------- */
+  .selo-img{width:30px;height:30px;border-radius:7px;object-fit:contain;display:block;background:rgba(255,255,255,.06)}
+  .logo-linha{display:flex;align-items:center;gap:10px}
+  .logo-previa{width:44px;height:44px;border-radius:10px;object-fit:contain;background:#fff;border:1px solid var(--linha)}
+  .logo-vazia{
+    width:44px;height:44px;border-radius:10px;border:1px dashed var(--linha);
+    display:grid;place-items:center;font-size:9px;color:var(--texto-2);text-align:center;line-height:1.2;
+  }
+
   .brinde{
     position:fixed;left:50%;bottom:calc(96px + var(--safe-b));z-index:60;
     transform:translate(-50%,14px);opacity:0;transition:.2s;background:var(--tinta);color:#fff;
@@ -369,6 +485,7 @@
   <button id="btAtualizar">Atualizar</button>
 </div>
 <input type="file" id="arquivo" accept="application/json,.json" hidden>
+<input type="file" id="imagem" accept="image/*" hidden>
 
 <script>
 (function(){
@@ -382,7 +499,7 @@
    então duas pessoas podem mexer no quadro ao mesmo tempo.
    ============================================================ */
 
-const VERSAO_APP = 8;                   // sobe a cada versão nova do arquivo
+const VERSAO_APP = 10;                   // sobe a cada versão nova do arquivo
 const CHAVE_DOC = "gabinete-doc:v2";
 const CHAVE_CFG = "gabinete-cfg:v2";
 const CHAVE_SES = "gabinete-sessao:v1";
@@ -399,6 +516,7 @@ let sessao = null;   // { token, refresh, expira, email, nome, papel }
 let vista = { pasta:null, modo:"quadro", busca:"", resp:null, buscaContato:"", ocultarFeitas:false };
 let semArmazenamento = false;
 let salvamento = null;
+let conexaoInicial = null;   // promessa da primeira sincronização, para o QR esperar por ela
 
 /* =================== utilidades =================== */
 
@@ -457,6 +575,95 @@ function foneLimpo(f){
 function atendimentosDe(cid){
   return vivas(estado.cartoes).filter(c => c.contatoId === cid);
 }
+/* ---------- administração e pessoal ---------- */
+const VERBA = () => (estado.verba = estado.verba || { teto:0, mod:0, lancamentos:{} });
+const lancamentos = () => Object.values(VERBA().lancamentos || {}).filter(l => !l.del)
+  .sort((a,b) => String(b.data).localeCompare(String(a.data)));
+const equipeRH = () => vivas(estado.pessoal || {}).sort((a,b) => String(a.nome).localeCompare(String(b.nome)));
+
+const CATEGORIAS = ["Combustível","Material de escritório","Divulgação","Locação","Serviços","Alimentação","Transporte","Outros"];
+const VINCULOS = ["Comissionado","Efetivo","Estagiário","Voluntário","Terceirizado"];
+
+function dinheiro(v){
+  return "R$ " + (Number(v)||0).toLocaleString("pt-BR", { minimumFractionDigits:2, maximumFractionDigits:2 });
+}
+function mesDe(iso){ return String(iso||"").slice(0,7); }
+function mesCorrente(){
+  const d = new Date();
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
+}
+function nomeMes(ym){
+  if(!ym) return "";
+  const [a,m] = ym.split("-");
+  return MESES[parseInt(m,10)-1] + " de " + a;
+}
+function dataBR(iso){
+  if(!iso) return "";
+  const [a,m,d] = String(iso).split("-");
+  return d + "/" + m + "/" + a;
+}
+/** dias até o próximo aniversário, para ordenar a lista */
+function proximoAniversario(iso){
+  if(!iso) return null;
+  const [ , m, d] = String(iso).split("-").map(Number);
+  if(!m || !d) return null;
+  const hoje = HOJE();
+  let alvo = new Date(hoje.getFullYear(), m-1, d);
+  if(alvo < hoje) alvo = new Date(hoje.getFullYear()+1, m-1, d);
+  return Math.round((alvo - hoje) / 86400000);
+}
+
+/* ---------- links do Google Drive ---------- */
+function tipoDrive(url){
+  const u = String(url || "");
+  if(!u) return null;
+  if(/docs\.google\.com\/document/.test(u))      return { r:"Documento",     i:"📄" };
+  if(/docs\.google\.com\/spreadsheets/.test(u))  return { r:"Planilha",      i:"▦" };
+  if(/docs\.google\.com\/presentation/.test(u))  return { r:"Apresentação",  i:"▤" };
+  if(/docs\.google\.com\/forms/.test(u))         return { r:"Formulário",    i:"☑" };
+  if(/drive\.google\.com\/drive\/folders/.test(u)) return { r:"Pasta do Drive", i:"🗀" };
+  if(/drive\.google\.com/.test(u))                return { r:"Arquivo no Drive", i:"🗎" };
+  if(/^https?:\/\//.test(u))                      return { r:"Link",          i:"🔗" };
+  return null;
+}
+function linkValido(u){ return /^https?:\/\//i.test(String(u||"").trim()); }
+
+function folhaLinkDrive(tipo, alvoId){
+  const alvo = tipo === "pasta" ? estado.pastas[alvoId] : estado.cartoes[alvoId];
+  if(!alvo) return;
+  const t = tipoDrive(alvo.link);
+  abrirFolha(
+    '<h2>Link do Google Drive</h2>'
+    + '<p>Cole o endereço de um documento, planilha ou pasta do Drive. '
+    + 'Quem abrir ' + (tipo === "pasta" ? "esta pasta" : "esta tarefa") + ' vê um atalho direto para ele.</p>'
+    + '<div class="campo"><label for="dvLink">Endereço</label>'
+    + '<input id="dvLink" value="'+esc(alvo.link || "")+'" placeholder="https://docs.google.com/document/d/…" '
+    + 'autocapitalize="off" spellcheck="false"></div>'
+    + '<div class="campo"><label for="dvNome">Como chamar</label>'
+    + '<input id="dvNome" value="'+esc(alvo.linkNome || "")+'" placeholder="Ofício 245/2026"></div>'
+    + (t ? '<div class="aviso bom">Reconhecido como '+t.r+'.</div>' : '')
+    + '<div class="aviso">O link só abre para quem já tem permissão no Drive. Confira o compartilhamento lá antes de espalhar.</div>'
+    + '<div class="acoes">'
+    + (alvo.link ? '<button class="btn perigo" id="dvTirar" aria-label="Tirar o link">✕</button>' : '')
+    + '<button class="btn claro" data-fechar="1">Cancelar</button>'
+    + '<button class="btn" id="dvSalvar">Salvar</button></div>'
+  );
+  const tirar = document.getElementById("dvTirar");
+  if(tirar) tirar.addEventListener("click", () => {
+    delete alvo.link; delete alvo.linkNome; tocar(alvo);
+    fecharFolha(); mudou(); desenhar();
+  });
+  document.getElementById("dvSalvar").addEventListener("click", () => {
+    const u = document.getElementById("dvLink").value.trim();
+    if(u && !linkValido(u)){ brinde("O endereço precisa começar com https://"); return; }
+    if(u){ alvo.link = u; alvo.linkNome = document.getElementById("dvNome").value.trim(); }
+    else { delete alvo.link; delete alvo.linkNome; }
+    tocar(alvo);
+    fecharFolha(); mudou(); desenhar();
+    if(tipo === "pasta") folhaPastas();
+  });
+}
+
 function digitando(){
   const a = document.activeElement;
   if(!a || !/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return false;
@@ -562,7 +769,8 @@ function podeExcluir(alvo){
 function pedidosAbertos(){
   return [].concat(
     vivas(estado.cartoes).filter(c => c.pedidoDel).map(c => ({ tipo:"tarefa", alvo:c })),
-    vivas(estado.contatos || {}).filter(c => c.pedidoDel).map(c => ({ tipo:"contato", alvo:c }))
+    vivas(estado.contatos || {}).filter(c => c.pedidoDel).map(c => ({ tipo:"contato", alvo:c })),
+    vivas(estado.pessoal || {}).filter(c => c.pedidoDel).map(c => ({ tipo:"ficha", alvo:c }))
   );
 }
 
@@ -677,6 +885,9 @@ function completar(doc){
     doc.marcouFinal = true;
   }
   if(!doc.contatos) doc.contatos = {};
+  if(!doc.verba) doc.verba = { teto:0, mod:0, lancamentos:{} };
+  if(!doc.verba.lancamentos) doc.verba.lancamentos = {};
+  if(!doc.pessoal) doc.pessoal = {};
   if(!doc.app) doc.app = { v:VERSAO_APP, mod:agora() };
   else if((doc.app.v || 0) < VERSAO_APP) doc.app = { v:VERSAO_APP, mod:agora() };
   if(!doc.marca) doc.marca = { selo:"carimbo", mono:"CG", cor:"#C8A63C", mod:0 };
@@ -713,6 +924,12 @@ function fundir(local, remoto){
     cartoes: fundirMapa(local.cartoes, remoto.cartoes, true),
     membros:  fundirMapa(local.membros  || {}, remoto.membros  || {}),
     contatos: fundirMapa(local.contatos || {}, remoto.contatos || {}, true),
+    verba: {
+      teto: ((remoto.verba||{}).mod||0) > ((local.verba||{}).mod||0) ? (remoto.verba||{}).teto : (local.verba||{}).teto,
+      mod: Math.max((local.verba||{}).mod||0, (remoto.verba||{}).mod||0),
+      lancamentos: fundirMapa((local.verba||{}).lancamentos || {}, (remoto.verba||{}).lancamentos || {})
+    },
+    pessoal: fundirMapa(local.pessoal || {}, remoto.pessoal || {}, true),
     dono:   ((remoto.regras||{}).mod||0) > ((local.regras||{}).mod||0) ? remoto.dono : (local.dono || remoto.dono),
     regras: ((remoto.regras||{}).mod||0) > ((local.regras||{}).mod||0) ? remoto.regras : (local.regras || remoto.regras),
     log:    unirEventos(local.log, remoto.log, 60)
@@ -720,7 +937,13 @@ function fundir(local, remoto){
 }
 function limparTumulos(doc){
   const corte = agora() - TOMBO;
-  ["pastas","colunas","cartoes","membros","contatos"].forEach(m => {
+  if(doc.verba && doc.verba.lancamentos){
+    Object.keys(doc.verba.lancamentos).forEach(k => {
+      const r = doc.verba.lancamentos[k];
+      if(r.del && (r.mod||0) < corte) delete doc.verba.lancamentos[k];
+    });
+  }
+  ["pastas","colunas","cartoes","membros","contatos","pessoal"].forEach(m => {
     Object.keys(doc[m]).forEach(k => { if(doc[m][k].del && (doc[m][k].mod||0) < corte) delete doc[m][k]; });
   });
   return doc;
@@ -1163,6 +1386,7 @@ function ajustarVista(){
 
 function htmlSelo(m){
   m = m || {};
+  if(m.img) return '<img class="selo-img" src="'+esc(m.img)+'" alt="" width="30" height="30">';
   const mono = esc(String(m.mono || "CG").slice(0,3).toUpperCase());
   const tam = mono.length > 2 ? 8.5 : 11;
   const letra = '<text x="16" y="16.5" text-anchor="middle" dominant-baseline="central" '
@@ -1192,6 +1416,11 @@ function pintarMarca(){
   document.documentElement.style.setProperty("--ouro", c);
   document.getElementById("selo").innerHTML = htmlSelo(m);
   try{
+    if(m.img){
+      const link0 = document.querySelector('link[rel="icon"]');
+      if(link0) link0.href = m.img;
+      return;
+    }
     const miolo = htmlSelo(m).replace(/currentColor/g, c)
       .replace(/^<svg[^>]*>/, "").replace(/<\/svg>$/, "");
     const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">'
@@ -1217,6 +1446,9 @@ function desenharAbas(){
   h += '<button class="aba prazos" role="tab" data-prazos="1" aria-selected="'+(vista.modo==="prazos")+'">Prazos</button>';
   h += '<button class="aba prazos" role="tab" data-contatos="1" aria-selected="'+(vista.modo==="contatos")+'">Contatos'
      + '<span class="n">'+agenda().length+'</span></button>';
+  h += '<button class="aba prazos" role="tab" data-admin="1" aria-selected="'+(vista.modo==="admin")+'">Administração</button>';
+  h += '<button class="aba prazos" role="tab" data-pessoal="1" aria-selected="'+(vista.modo==="pessoal")+'">Pessoal'
+     + '<span class="n">'+equipeRH().length+'</span></button>';
   h += '<button class="aba" data-nova="1" aria-selected="false">+ Pasta</button>';
   document.getElementById("abas").innerHTML = h;
 }
@@ -1233,6 +1465,9 @@ function htmlCartao(c){
   if(c.notas) h += '<span class="nota">✎</span>';
   const pes = c.contatoId ? contato(c.contatoId) : null;
   if(pes && !pes.del) h += '<span class="vinculo">'+esc(String(pes.nome).split(/\s+/)[0])+'</span>';
+  const td = tipoDrive(c.link);
+  if(td) h += '<a class="drive" href="'+esc(c.link)+'" target="_blank" rel="noopener" '
+     + 'title="'+esc(c.linkNome || td.r)+'">'+td.i+' '+esc(c.linkNome || td.r)+'</a>';
   h += '<button class="feito-bt'+(c.feito?" on":"")+'" data-feito="'+c.id+'" '
      + 'aria-label="'+(c.feito?"Reabrir":"Marcar como concluída")+'" aria-pressed="'+(!!c.feito)+'">✓</button>';
   const r = c.resp ? quem(c.resp) : null;
@@ -1244,7 +1479,11 @@ function htmlCartao(c){
 function desenharQuadro(){
   ajustarVista();
   if(!vista.pasta){ document.getElementById("tela").innerHTML = '<div class="rolo"><div class="nada">Nenhuma pasta.<br>Toque em “+ Pasta” para criar a primeira.</div></div>'; return; }
-  let h = '<div class="trilho" id="trilho">';
+  const pAtual = estado.pastas[vista.pasta];
+  const tdp = pAtual ? tipoDrive(pAtual.link) : null;
+  let h = tdp ? '<a class="faixa-drive" href="'+esc(pAtual.link)+'" target="_blank" rel="noopener">'
+    + tdp.i + ' ' + esc(pAtual.linkNome || tdp.r) + ' <span>abrir no Drive</span></a>' : '';
+  h += '<div class="trilho" id="trilho">';
   colunas(vista.pasta).forEach(k => {
     const cs = cartoes(k.id)
       .filter(c => !vista.resp || c.resp === vista.resp)
@@ -1271,16 +1510,104 @@ function ondeEsta(c){
   return (p ? p.nome : "?") + " · " + (k ? k.nome : "?");
 }
 
+const MESES = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+const DIAS_S = ["D","S","T","Q","Q","S","S"];
+
+function chaveDia(d){
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+
+function desenharCalendario(){
+  const ref = vista.mesPrazo ? new Date(vista.mesPrazo + "-01T12:00:00") : new Date();
+  const ano = ref.getFullYear(), mes = ref.getMonth();
+  const ym = ano + "-" + String(mes+1).padStart(2,"0");
+
+  const porDia = {};
+  vivas(estado.cartoes).filter(c => c.prazo && !c.feito && estado.colunas[c.coluna] && !estado.colunas[c.coluna].del)
+    .forEach(c => { (porDia[c.prazo] = porDia[c.prazo] || []).push(c); });
+
+  const primeiro = new Date(ano, mes, 1);
+  const total = new Date(ano, mes + 1, 0).getDate();
+  const inicio = primeiro.getDay();
+  const hojeK = chaveDia(HOJE());
+  const sel = vista.diaPrazo;
+
+  let h = '<div class="rolo">' + barraPrazos("calendario");
+  h += '<div class="cal">'
+     + '<div class="cal-topo"><button class="nav" data-mes="-1">‹</button>'
+     + '<span>'+MESES[mes]+' de '+ano+'</span>'
+     + '<button class="nav" data-mes="1">›</button></div>'
+     + '<div class="cal-grade">'
+     + DIAS_S.map(d => '<div class="cal-ds">'+d+'</div>').join("");
+  for(let i = 0; i < inicio; i++) h += '<div class="cal-vazio"></div>';
+  for(let d = 1; d <= total; d++){
+    const k = ano + "-" + String(mes+1).padStart(2,"0") + "-" + String(d).padStart(2,"0");
+    const lista = porDia[k] || [];
+    const atrasado = lista.length && k < hojeK;
+    let cls = "cal-dia";
+    if(k === hojeK) cls += " hoje";
+    if(lista.length) cls += atrasado ? " vencido" : " tem";
+    if(k === sel) cls += " sel";
+    h += '<button class="'+cls+'" data-dia="'+k+'"><span class="n">'+d+'</span>'
+       + (lista.length ? '<span class="pt">'+(lista.length > 3 ? 3 : lista.length)+'</span>' : '')
+       + '</button>';
+  }
+  h += '</div></div>';
+
+  const doDia = sel ? (porDia[sel] || []) : [];
+  if(sel){
+    const dt = new Date(sel + "T12:00:00");
+    h += '<div class="grupo"><h3>'+dt.getDate()+' de '+MESES[dt.getMonth()]+'</h3>';
+    if(!doDia.length) h += '<div class="nada">Nenhum prazo neste dia.</div>';
+    doDia.forEach(c => { h += linhaPrazo(c); });
+    h += '</div>';
+  }else{
+    const doMes = Object.keys(porDia).filter(k => k.slice(0,7) === ym).sort();
+    h += '<div class="grupo"><h3>'+MESES[mes]+' · '+doMes.reduce((s,k)=>s+porDia[k].length,0)+' prazo(s)</h3>';
+    if(!doMes.length) h += '<div class="nada">Nenhum prazo em aberto neste mês.<br>Toque nas setas para ver outro.</div>';
+    doMes.forEach(k => porDia[k].forEach(c => { h += linhaPrazo(c); }));
+    h += '</div>';
+  }
+  document.getElementById("tela").innerHTML = h + '</div>';
+
+  document.querySelectorAll("[data-mes]").forEach(b => b.addEventListener("click", () => {
+    const d = new Date(ano, mes + parseInt(b.dataset.mes,10), 1);
+    vista.mesPrazo = d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
+    vista.diaPrazo = null;
+    desenharCalendario();
+  }));
+  document.querySelectorAll("[data-dia]").forEach(b => b.addEventListener("click", () => {
+    vista.diaPrazo = (vista.diaPrazo === b.dataset.dia) ? null : b.dataset.dia;
+    desenharCalendario();
+  }));
+}
+
+function linhaPrazo(c){
+  const r = rotuloPrazo(c.prazo);
+  return '<button class="linha-item" data-cartao="'+c.id+'"><span class="prazo '+r.cls+'">'+r.txt+'</span>'
+    + '<span style="flex:1;min-width:0"><span class="tit">'+esc(c.titulo)+'</span><br>'
+    + '<span class="onde">'+esc(ondeEsta(c))+'</span></span></button>';
+}
+
+function barraPrazos(atual){
+  return '<div class="segm" style="margin-bottom:14px">'
+    + '<button type="button" data-vprazo="lista" aria-pressed="'+(atual==="lista")+'">Lista</button>'
+    + '<button type="button" data-vprazo="calendario" aria-pressed="'+(atual==="calendario")+'">Calendário</button>'
+    + '</div>';
+}
+
 function desenharPrazos(){
+  if(vista.prazoVista === "calendario") return desenharCalendario();
   const itens = vivas(estado.cartoes).filter(c => c.prazo && !c.feito && estado.colunas[c.coluna] && !estado.colunas[c.coluna].del)
                   .map(c => ({ c, d:diasAte(c.prazo) })).sort((a,b) => a.d - b.d);
   const grupos = [
     { t:"Vencidos", f:i => i.d < 0, u:true },
     { t:"Hoje", f:i => i.d === 0, u:true },
-    { t:"Próximos 7 dias", f:i => i.d > 0 && i.d <= 7 },
-    { t:"Depois", f:i => i.d > 7 }
+    { t:"Esta semana", f:i => i.d > 0 && i.d <= 7 },
+    { t:"Próximas semanas", f:i => i.d > 7 && i.d <= 30 },
+    { t:"No horizonte", f:i => i.d > 30 }
   ];
-  let h = '<div class="rolo">';
+  let h = '<div class="rolo">' + barraPrazos("lista");
   if(!itens.length) h += '<div class="nada">Nenhuma tarefa com prazo.<br>Abra uma tarefa e defina a data para ela aparecer aqui.</div>';
   grupos.forEach(g => {
     const lista = itens.filter(g.f);
@@ -1288,9 +1615,7 @@ function desenharPrazos(){
     h += '<div class="grupo'+(g.u?" urgente":"")+'"><h3>'+g.t+'</h3>';
     lista.forEach(i => {
       const r = rotuloPrazo(i.c.prazo);
-      h += '<button class="linha-item" data-cartao="'+i.c.id+'"><span class="prazo '+r.cls+'">'+r.txt+'</span>'
-         + '<span style="flex:1;min-width:0"><span class="tit">'+esc(i.c.titulo)+'</span><br>'
-         + '<span class="onde">'+esc(ondeEsta(i.c))+'</span></span></button>';
+      h += linhaPrazo(i.c);
     });
     h += '</div>';
   });
@@ -1328,6 +1653,255 @@ function desenharContatos(){
   document.getElementById("filtroContato").addEventListener("input", e => {
     vista.buscaContato = e.target.value;
     document.getElementById("listaContatos").innerHTML = linhasContatos();
+  });
+}
+
+function desenharAdmin(){
+  const v = VERBA();
+  const ym = vista.mesVerba || mesCorrente();
+  const doMes = lancamentos().filter(l => mesDe(l.data) === ym);
+  const gasto = doMes.reduce((s,l) => s + (Number(l.valor)||0), 0);
+  const teto = Number(v.teto) || 0;
+  const saldo = teto - gasto;
+  const perc = teto ? Math.min(100, Math.round(gasto / teto * 100)) : 0;
+
+  const meses = {};
+  lancamentos().forEach(l => { if(mesDe(l.data)) meses[mesDe(l.data)] = 1; });
+  meses[mesCorrente()] = 1;
+  const listaMeses = Object.keys(meses).sort().reverse();
+
+  const porCat = {};
+  doMes.forEach(l => { porCat[l.categoria || "Outros"] = (porCat[l.categoria || "Outros"] || 0) + (Number(l.valor)||0); });
+  const cats = Object.keys(porCat).sort((a,b) => porCat[b] - porCat[a]);
+
+  let h = '<div class="rolo">';
+  h += '<div class="campo"><label for="selMesVerba">Mês</label><select id="selMesVerba">'
+     + listaMeses.map(m => '<option value="'+m+'"'+(m===ym?" selected":"")+'>'+nomeMes(m)+'</option>').join("")
+     + '</select></div>';
+
+  h += '<div class="verba-caixa">'
+     + '<div class="linha1"><span class="rot">Verba do mês</span>'
+     + '<button class="editar" id="btTeto">' + (teto ? dinheiro(teto) : "definir teto") + '</button></div>'
+     + '<div class="barra"><div class="cheio'+(saldo < 0 ? " estourou" : "")+'" style="width:'+perc+'%"></div></div>'
+     + '<div class="linha2"><div><span class="n">'+dinheiro(gasto)+'</span><span class="r">gasto</span></div>'
+     + '<div><span class="n'+(teto && saldo < 0 ? " ruim" : "")+'">'
+     + (teto ? dinheiro(saldo) : "—") + '</span><span class="r">'
+     + (!teto ? "sem teto" : (saldo < 0 ? "estourado" : "disponível")) + '</span></div>'
+     + '<div><span class="n">'+doMes.length+'</span><span class="r">lançamento'+(doMes.length===1?"":"s")+'</span></div></div>'
+     + '</div>';
+
+  if(cats.length){
+    h += '<div class="grupo"><h3>Por categoria</h3>';
+    cats.forEach(c => {
+      const p = gasto ? Math.round(porCat[c] / gasto * 100) : 0;
+      h += '<div class="cat-linha"><span class="cn">'+esc(c)+'</span>'
+         + '<span class="cb"><span style="width:'+p+'%;background:'+cor(c)+'"></span></span>'
+         + '<span class="cv">'+dinheiro(porCat[c])+'</span></div>';
+    });
+    h += '</div>';
+  }
+
+  h += '<div class="grupo"><h3>Lançamentos</h3>';
+  if(!doMes.length) h += '<div class="nada">Nada lançado em '+nomeMes(ym)+'.<br>Toque em + para incluir.</div>';
+  doMes.forEach(l => {
+    h += '<button class="linha-item" data-lanc="'+l.id+'">'
+       + '<span class="prazo">'+dataBR(l.data).slice(0,5)+'</span>'
+       + '<span style="flex:1;min-width:0"><span class="tit">'+esc(l.descricao)+'</span><br>'
+       + '<span class="onde">'+esc(l.categoria || "Outros")+(l.fornecedor ? ' · '+esc(l.fornecedor) : '')+'</span></span>'
+       + '<span class="valor">'+dinheiro(l.valor)+'</span></button>';
+  });
+  h += '</div>';
+  h += '<div class="acoes"><button class="btn claro" id="btCsvVerba">Exportar mês em CSV</button></div>';
+  h += '<div class="dica" style="margin-top:14px">Controle interno de acompanhamento. Não substitui a prestação de contas '
+     + 'formal da verba de gabinete, que segue o que a Câmara exigir.</div>';
+  document.getElementById("tela").innerHTML = h + '</div>';
+
+  document.getElementById("selMesVerba").addEventListener("change", e => { vista.mesVerba = e.target.value; desenharAdmin(); });
+  document.getElementById("btTeto").addEventListener("click", () => {
+    if(!souDono()){ brinde("Só " + (nomeDono() || "o responsável") + " define o teto."); return; }
+    pedirTexto("Teto mensal da verba (só números)", teto ? String(teto) : "", txt => {
+      v.teto = Number(String(txt).replace(/[^\d,.-]/g,"").replace(/\./g,"").replace(",",".")) || 0;
+      v.mod = agora();
+      logar("definiu o teto da verba em " + dinheiro(v.teto));
+      mudou(); desenharAdmin();
+    });
+  });
+  document.getElementById("btCsvVerba").addEventListener("click", () => exportarVerbaCSV(ym));
+}
+
+function folhaLancamento(lid){
+  const v = VERBA();
+  const l = lid ? v.lancamentos[lid] : null;
+  const b = l || { data:new Date().toISOString().slice(0,10), descricao:"", valor:"", categoria:"Outros", fornecedor:"", nota:"", link:"" };
+  abrirFolha(
+    '<h2>'+(l ? "Lançamento" : "Novo lançamento")+'</h2>'
+    + '<div class="duo"><div class="campo"><label for="lcData">Data</label>'
+    + '<input id="lcData" type="date" value="'+esc(b.data)+'"></div>'
+    + '<div class="campo"><label for="lcValor">Valor (R$)</label>'
+    + '<input id="lcValor" inputmode="decimal" value="'+esc(b.valor)+'" placeholder="0,00"></div></div>'
+    + '<div class="campo"><label for="lcDesc">Descrição</label>'
+    + '<input id="lcDesc" value="'+esc(b.descricao)+'" placeholder="Ex.: combustível — viagem a Corrêas"></div>'
+    + '<div class="campo"><label for="lcCat">Categoria</label><select id="lcCat">'
+    + CATEGORIAS.map(c => '<option'+(b.categoria===c?" selected":"")+'>'+esc(c)+'</option>').join("")
+    + '</select></div>'
+    + '<div class="duo"><div class="campo"><label for="lcForn">Fornecedor</label>'
+    + '<input id="lcForn" value="'+esc(b.fornecedor)+'" placeholder="opcional"></div>'
+    + '<div class="campo"><label for="lcNota">Nota fiscal</label>'
+    + '<input id="lcNota" value="'+esc(b.nota)+'" placeholder="nº, opcional"></div></div>'
+    + '<div class="campo"><label for="lcLink">Comprovante no Drive</label>'
+    + '<input id="lcLink" value="'+esc(b.link||"")+'" placeholder="https://drive.google.com/… (opcional)" autocapitalize="off"></div>'
+    + (l ? blocoHistorico(l) : '')
+    + '<div class="acoes">'
+    + (l ? '<button class="btn perigo" id="lcExcluir" aria-label="Excluir">✕</button>' : '')
+    + '<button class="btn claro" data-fechar="1">Cancelar</button>'
+    + '<button class="btn" id="lcSalvar">'+(l ? "Salvar" : "Lançar")+'</button></div>'
+  );
+  if(l) document.getElementById("lcExcluir").addEventListener("click", () => {
+    if(!souDono() && l.criadoPor !== idMembro(cfg.eu)){ brinde("Só quem lançou ou o responsável podem excluir."); return; }
+    l.del = true; registrar(l, "x"); tocar(l);
+    logar("excluiu o lançamento “" + l.descricao + "”");
+    fecharFolha(); mudou(); desenharAdmin();
+  });
+  document.getElementById("lcSalvar").addEventListener("click", () => {
+    const desc = document.getElementById("lcDesc").value.trim();
+    const valor = Number(document.getElementById("lcValor").value.replace(/[^\d,.-]/g,"").replace(/\./g,"").replace(",",".")) || 0;
+    if(!desc){ brinde("Descreva o gasto."); return; }
+    if(!valor){ brinde("Informe o valor."); return; }
+    const dados = {
+      data: document.getElementById("lcData").value || new Date().toISOString().slice(0,10),
+      descricao: desc, valor: valor,
+      categoria: document.getElementById("lcCat").value,
+      fornecedor: document.getElementById("lcForn").value.trim(),
+      nota: document.getElementById("lcNota").value.trim(),
+      link: document.getElementById("lcLink").value.trim()
+    };
+    if(l){ Object.assign(l, dados); registrar(l, "e"); tocar(l); }
+    else{
+      const novo = tocar(Object.assign({ id:id("l"), criadoPor:idMembro(cfg.eu), criadoEm:agora() }, dados));
+      registrar(novo, "c");
+      VERBA().lancamentos[novo.id] = novo;
+    }
+    VERBA().mod = agora();
+    fecharFolha(); mudou();
+    vista.mesVerba = mesDe(dados.data);
+    desenharAdmin();
+  });
+}
+
+function exportarVerbaCSV(ym){
+  const doMes = lancamentos().filter(l => mesDe(l.data) === ym);
+  if(!doMes.length){ brinde("Nada para exportar neste mês."); return; }
+  const c = x => '"' + String(x==null?"":x).replace(/"/g,'""') + '"';
+  const linhas = [["Data","Descrição","Categoria","Fornecedor","Nota fiscal","Valor (R$)","Comprovante"].map(c).join(";")];
+  doMes.slice().reverse().forEach(l => {
+    linhas.push([dataBR(l.data), l.descricao, l.categoria, l.fornecedor, l.nota,
+      (Number(l.valor)||0).toFixed(2).replace(".",","), l.link||""].map(c).join(";"));
+  });
+  const total = doMes.reduce((s,l) => s + (Number(l.valor)||0), 0);
+  linhas.push("");
+  linhas.push([c("Total"),c(""),c(""),c(""),c(""),c(total.toFixed(2).replace(".",",")),c("")].join(";"));
+  linhas.push([c("Teto"),c(""),c(""),c(""),c(""),c((Number(VERBA().teto)||0).toFixed(2).replace(".",",")),c("")].join(";"));
+  const blob = new Blob(["\ufeff" + linhas.join("\r\n")], { type:"text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = "verba-" + ym + ".csv";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+  brinde("Planilha exportada.");
+}
+
+function desenharPessoal(){
+  const lista = equipeRH();
+  const hoje = HOJE();
+  const aniversarios = lista.filter(p => p.nascimento && proximoAniversario(p.nascimento) !== null)
+    .map(p => ({ p, d:proximoAniversario(p.nascimento) }))
+    .filter(x => x.d <= 30).sort((a,b) => a.d - b.d);
+  const emFerias = lista.filter(p => p.feriasIni && p.feriasFim
+    && new Date(p.feriasIni+"T00:00:00") <= hoje && new Date(p.feriasFim+"T23:59:59") >= hoje);
+
+  let h = '<div class="rolo">';
+  if(emFerias.length)
+    h += '<div class="aviso">Afastado agora: ' + emFerias.map(p => esc(p.nome)).join(", ") + '.</div>';
+  if(aniversarios.length)
+    h += '<div class="aviso bom">Aniversário à vista: '
+       + aniversarios.map(x => esc(x.p.nome) + " (" + (x.d === 0 ? "hoje" : "em " + x.d + " d") + ")").join(", ") + '.</div>';
+
+  if(!lista.length){
+    h += '<div class="nada">Ninguém cadastrado.<br>Toque em + para incluir quem trabalha no gabinete.</div>';
+  }
+  lista.forEach(p => {
+    const emF = emFerias.indexOf(p) > -1;
+    h += '<button class="ficha" data-pessoa="'+p.id+'">'
+       + '<span class="av" style="background:'+cor(p.nome)+'">'+esc(iniciais(p.nome))+'</span>'
+       + '<span style="flex:1;min-width:0"><span class="nome">'+esc(p.nome)+'</span><br>'
+       + '<span class="sub">'+esc([p.cargo, p.vinculo].filter(Boolean).join(" · "))+'</span></span>'
+       + (emF ? '<span class="conta" style="color:var(--ambar);background:#FBF0DA">férias</span>' : '')
+       + '</button>';
+  });
+  h += '<div class="dica" style="margin-top:16px">Cadastro funcional interno. Guarde só o necessário para a gestão do gabinete: '
+     + 'nada de CPF, dado bancário, informação de saúde ou de dependentes.</div>';
+  document.getElementById("tela").innerHTML = h + '</div>';
+}
+
+function folhaPessoa(pid){
+  const p = pid ? (estado.pessoal || {})[pid] : null;
+  const b = p || { nome:"", cargo:"", vinculo:"Comissionado", matricula:"", admissao:"", nascimento:"",
+                   fone:"", email:"", feriasIni:"", feriasFim:"", obs:"" };
+  abrirFolha(
+    '<h2>'+(p ? "Ficha funcional" : "Nova pessoa")+'</h2>'
+    + '<div class="campo"><label for="psNome">Nome</label><input id="psNome" value="'+esc(b.nome)+'"></div>'
+    + '<div class="duo"><div class="campo"><label for="psCargo">Cargo</label>'
+    + '<input id="psCargo" value="'+esc(b.cargo)+'" placeholder="Assessor parlamentar"></div>'
+    + '<div class="campo"><label for="psVinc">Vínculo</label><select id="psVinc">'
+    + VINCULOS.map(v => '<option'+(b.vinculo===v?" selected":"")+'>'+v+'</option>').join("")
+    + '</select></div></div>'
+    + '<div class="duo"><div class="campo"><label for="psMat">Matrícula</label>'
+    + '<input id="psMat" value="'+esc(b.matricula)+'" placeholder="opcional"></div>'
+    + '<div class="campo"><label for="psAdm">Admissão</label>'
+    + '<input id="psAdm" type="date" value="'+esc(b.admissao)+'"></div></div>'
+    + '<div class="duo"><div class="campo"><label for="psFone">Telefone</label>'
+    + '<input id="psFone" type="tel" value="'+esc(b.fone)+'"></div>'
+    + '<div class="campo"><label for="psNasc">Aniversário</label>'
+    + '<input id="psNasc" type="date" value="'+esc(b.nascimento)+'"></div></div>'
+    + '<div class="campo"><label for="psEmail">E-mail</label>'
+    + '<input id="psEmail" type="email" value="'+esc(b.email)+'" autocapitalize="off"></div>'
+    + '<div class="duo"><div class="campo"><label for="psFi">Férias — início</label>'
+    + '<input id="psFi" type="date" value="'+esc(b.feriasIni)+'"></div>'
+    + '<div class="campo"><label for="psFf">Férias — fim</label>'
+    + '<input id="psFf" type="date" value="'+esc(b.feriasFim)+'"></div></div>'
+    + '<div class="campo"><label for="psObs">Observações</label>'
+    + '<textarea id="psObs" placeholder="Escala, atribuições, o que ajudar na gestão">'+esc(b.obs)+'</textarea>'
+    + '<div class="dica">Sem CPF, dado bancário, informação de saúde ou de dependentes.</div></div>'
+    + (p ? blocoHistorico(p) : '')
+    + '<div class="acoes">'
+    + (p ? '<button class="btn perigo" id="psExcluir" aria-label="Excluir">✕</button>' : '')
+    + '<button class="btn claro" data-fechar="1">Cancelar</button>'
+    + '<button class="btn" id="psSalvar">'+(p ? "Salvar" : "Cadastrar")+'</button></div>'
+  );
+  if(p) document.getElementById("psExcluir").addEventListener("click", () => pedirOuExcluir(p, "ficha", p.nome, () => desenharPessoal()));
+  document.getElementById("psSalvar").addEventListener("click", () => {
+    const nome = document.getElementById("psNome").value.trim();
+    if(!nome){ brinde("A ficha precisa de um nome."); return; }
+    const dados = {
+      nome, cargo:document.getElementById("psCargo").value.trim(),
+      vinculo:document.getElementById("psVinc").value,
+      matricula:document.getElementById("psMat").value.trim(),
+      admissao:document.getElementById("psAdm").value,
+      nascimento:document.getElementById("psNasc").value,
+      fone:document.getElementById("psFone").value.trim(),
+      email:document.getElementById("psEmail").value.trim(),
+      feriasIni:document.getElementById("psFi").value,
+      feriasFim:document.getElementById("psFf").value,
+      obs:document.getElementById("psObs").value.trim()
+    };
+    if(p){ Object.assign(p, dados); registrar(p, "e"); tocar(p); }
+    else{
+      const novo = tocar(Object.assign({ id:id("rh"), criadoPor:idMembro(cfg.eu), criadoEm:agora() }, dados));
+      registrar(novo, "c");
+      estado.pessoal = estado.pessoal || {};
+      estado.pessoal[novo.id] = novo;
+    }
+    fecharFolha(); mudou(); vista.modo = "pessoal"; desenhar();
   });
 }
 
@@ -1371,9 +1945,11 @@ function desenhar(){
   if(vista.modo === "busca") desenharBusca();
   else if(vista.modo === "prazos") desenharPrazos();
   else if(vista.modo === "contatos") desenharContatos();
+  else if(vista.modo === "admin") desenharAdmin();
+  else if(vista.modo === "pessoal") desenharPessoal();
   else desenharQuadro();
   document.getElementById("fab").style.display =
-    (vista.modo === "quadro" || vista.modo === "contatos") ? "grid" : "none";
+    ["quadro","contatos","admin","pessoal"].indexOf(vista.modo) > -1 ? "grid" : "none";
   pintarStatus();
 }
 
@@ -1445,6 +2021,10 @@ function folhaCartao(cid, colunaPadrao){
     + '</div>'
     + (equipe().length ? '' : '<div class="dica">Ninguém entrou no quadro ainda. Assim que a equipe conectar com o próprio nome, os rostos aparecem aqui.</div>')
     + '</div>'
+    + '<div class="campo"><label for="fLink">Documento no Google Drive</label>'
+    + '<input id="fLink" value="'+esc(base.link || "")+'" placeholder="https://docs.google.com/… (opcional)" autocapitalize="off" spellcheck="false">'
+    + '<input id="fLinkNome" value="'+esc(base.linkNome || "")+'" placeholder="Como chamar o documento" style="margin-top:7px">'
+    + '<div class="dica">Cole o link do ofício, minuta ou pasta. Vira um atalho no cartão.</div></div>'
     + '<div class="campo"><label for="fContato">Pessoa atendida</label><select id="fContato">'
     + '<option value="">— nenhuma —</option>'
     + agenda().map(k => '<option value="'+k.id+'"'+(base.contatoId===k.id?" selected":"")+'>'
@@ -1492,6 +2072,8 @@ function folhaCartao(cid, colunaPadrao){
       prioridade: document.querySelector('#fPrio button[aria-pressed="true"]').dataset.p,
       resp: (document.querySelector('#fResp button[aria-pressed="true"]') || { dataset:{ r:"" } }).dataset.r,
       contatoId: document.getElementById("fContato").value,
+      link: document.getElementById("fLink").value.trim(),
+      linkNome: document.getElementById("fLinkNome").value.trim(),
       notas: document.getElementById("fNotas").value.trim()
     };
     const destino = document.getElementById("fLocal").value;
@@ -1781,6 +2363,7 @@ function folhaMenu(){
     + '<button class="item-menu" data-acao="sinc"><span class="marca-icone">⇅</span><span>Sincronização e equipe<small>'+(Sinc.ligado ? "Conectado ao quadro “"+esc(cfg.quadro)+"”" : "Desligada — dados só neste aparelho")+'</small></span></button>'
     + (p ? '<button class="item-menu" data-acao="renomear-pasta"><span class="marca-icone">✎</span><span>Renomear pasta atual<small>'+esc(p.nome)+'</small></span></button>' : '')
     + '<button class="item-menu" data-acao="nova-coluna"><span class="marca-icone">▤</span><span>Nova coluna<small>Adiciona ao fim do quadro atual</small></span></button>'
+    + '<button class="item-menu" data-acao="pastas"><span class="marca-icone">⣿</span><span>Organizar pastas<small>Mudar a ordem das abas e ligar ao Drive</small></span></button>'
     + '<button class="item-menu" data-acao="renomear-coluna"><span class="marca-icone">≡</span><span>Renomear ou excluir coluna</span></button>'
     + '<button class="item-menu" data-acao="nova-pasta"><span class="marca-icone">＋</span><span>Nova pasta</span></button>'
     + '<button class="item-menu" data-acao="excluir-pasta"><span class="marca-icone">🗑</span><span>Excluir pasta atual</span></button>'
@@ -1802,6 +2385,84 @@ function folhaMenu(){
     + '<button class="item-menu" data-acao="exportar"><span class="marca-icone">↧</span><span>Exportar backup<small>Baixa um arquivo .json com tudo</small></span></button>'
     + '<button class="item-menu" data-acao="importar"><span class="marca-icone">↥</span><span>Importar backup<small>Mescla com o que já existe</small></span></button>'
   );
+}
+
+function folhaPastas(){
+  const lista = pastas();
+  let h = '<h2>Organizar pastas</h2>'
+    + '<p>Segure o punho <span style="color:var(--texto-2)">⣿</span> e arraste para mudar a ordem das abas. '
+    + 'Toque no nome para renomear, ou no elo para ligar a pasta a uma pasta do Google Drive.</p>'
+    + '<div id="listaPastas" class="ordenavel">';
+  lista.forEach(p => {
+    const n = colunas(p.id).reduce((s,k) => s + cartoes(k.id).length, 0);
+    h += '<div class="item-ord" data-pasta-ord="'+p.id+'">'
+       + '<span class="punho" aria-hidden="true">⣿</span>'
+       + '<button class="nome" data-renomear-pasta="'+p.id+'">'+esc(p.nome)
+       + '<small>'+n+' tarefa'+(n===1?"":"s")+(p.link?' · ligada ao Drive':'')+'</small></button>'
+       + '<button class="elo'+(p.link?" on":"")+'" data-link-pasta="'+p.id+'" aria-label="Link do Drive">⛓</button>'
+       + '</div>';
+  });
+  h += '</div><div class="acoes"><button class="btn claro" data-fechar="1">Fechar</button>'
+     + '<button class="btn" data-acao="nova-pasta">Nova pasta</button></div>';
+  abrirFolha(h);
+  ligarOrdenacao(document.getElementById("listaPastas"), ids => {
+    ids.forEach((pid, i) => { const p = estado.pastas[pid]; if(p && p.ordem !== i){ p.ordem = i; tocar(p); } });
+    logar("mudou a ordem das pastas");
+    mudou(); desenharAbas();
+  });
+}
+
+/** arrasto vertical simples para listas de reordenar */
+function ligarOrdenacao(caixa, aoSoltar){
+  if(!caixa) return;
+  let alvo = null, marcador = null, deslocY = 0;
+
+  const itens = () => [...caixa.querySelectorAll(".item-ord")];
+  const idsAtuais = () => itens().map(el => el.dataset.pastaOrd || el.dataset.ordId);
+
+  caixa.addEventListener("pointerdown", e => {
+    const punho = e.target.closest(".punho");
+    if(!punho) return;
+    e.preventDefault();
+    alvo = punho.closest(".item-ord");
+    const r = alvo.getBoundingClientRect();
+    deslocY = e.clientY - r.top;
+    marcador = document.createElement("div");
+    marcador.className = "vago-ord";
+    marcador.style.height = r.height + "px";
+    alvo.parentNode.insertBefore(marcador, alvo);
+    alvo.classList.add("flutuando");
+    alvo.style.width = r.width + "px";
+    alvo.style.left = r.left + "px";
+    alvo.style.top = r.top + "px";
+    document.body.appendChild(alvo);
+    try{ punho.setPointerCapture(e.pointerId); }catch(err){}
+  });
+
+  caixa.addEventListener("pointermove", e => {
+    if(!alvo) return;
+    e.preventDefault();
+    alvo.style.top = (e.clientY - deslocY) + "px";
+    const irmaos = itens().filter(x => x !== alvo);
+    let antes = null;
+    for(const s of irmaos){
+      const rr = s.getBoundingClientRect();
+      if(e.clientY < rr.top + rr.height / 2){ antes = s; break; }
+    }
+    if(antes) caixa.insertBefore(marcador, antes); else caixa.appendChild(marcador);
+  });
+
+  const soltar = () => {
+    if(!alvo) return;
+    alvo.classList.remove("flutuando");
+    alvo.style.cssText = "";
+    marcador.parentNode.insertBefore(alvo, marcador);
+    marcador.remove();
+    alvo = null; marcador = null;
+    aoSoltar(idsAtuais());
+  };
+  caixa.addEventListener("pointerup", soltar);
+  caixa.addEventListener("pointercancel", soltar);
 }
 
 function folhaColunas(){
@@ -2062,12 +2723,51 @@ const CORES_MARCA = [
   ["#C0566A","Vinho"], ["#E08A3C","Âmbar"], ["#AFBCCE","Prata"]
 ];
 
+/** encolhe a imagem escolhida para caber no documento sincronizado */
+function encolherImagem(arquivo){
+  return new Promise((resolve, reject) => {
+    const leitor = new FileReader();
+    leitor.onerror = () => reject(new Error("não consegui ler o arquivo"));
+    leitor.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error("arquivo não é uma imagem válida"));
+      img.onload = () => {
+        const L = 128;
+        const c = document.createElement("canvas");
+        c.width = L; c.height = L;
+        const ctx = c.getContext("2d");
+        const escala = Math.min(L / img.width, L / img.height);
+        const w = Math.round(img.width * escala), h = Math.round(img.height * escala);
+        ctx.drawImage(img, Math.round((L-w)/2), Math.round((L-h)/2), w, h);
+        let saida = "";
+        try{ saida = c.toDataURL("image/webp", 0.85); }catch(e){}
+        if(!saida || saida.indexOf("data:image/webp") !== 0) saida = c.toDataURL("image/png");
+        resolve(saida);
+      };
+      img.src = leitor.result;
+    };
+    leitor.readAsDataURL(arquivo);
+  });
+}
+
 function folhaMarca(){
   const m = Object.assign({ selo:"carimbo", mono:"CG", cor:"#C8A63C" }, estado.marca || {});
   const opcoes = [["carimbo","Carimbo"],["brasao","Brasão"],["monograma","Monograma"]];
   abrirFolha(
     '<h2>Identidade visual</h2>'
     + '<p>Vale para todo mundo no quadro — quando você salvar, o selo muda no aparelho da equipe também.</p>'
+    + '<div class="campo"><label for="mTitulo">Nome da central</label>'
+    + '<input id="mTitulo" value="'+esc(estado.titulo || "")+'" placeholder="Central do Gabinete"></div>'
+    + '<div class="campo"><label for="mSub">Linha de baixo</label>'
+    + '<input id="mSub" value="'+esc(estado.subtitulo || "")+'" placeholder="Câmara Municipal de Petrópolis"></div>'
+    + '<div class="campo"><label>Imagem própria</label>'
+    + '<div class="logo-linha">'
+    + (m.img ? '<img class="logo-previa" src="'+esc(m.img)+'" alt="">' : '<span class="logo-vazia">sem imagem</span>')
+    + '<button class="btn claro" id="mEscolher" style="flex:1">'+(m.img ? "Trocar" : "Enviar imagem")+'</button>'
+    + (m.img ? '<button class="btn perigo" id="mTirar" aria-label="Tirar a imagem">✕</button>' : '')
+    + '</div>'
+    + '<div class="dica">Quadrada fica melhor. A imagem é reduzida para 128 px antes de guardar, '
+    + 'porque ela viaja junto com o quadro em cada sincronização.</div></div>'
     + '<div class="campo"><label>Formato do selo</label><div class="selos" id="mSelo">'
     + opcoes.map(o => '<button type="button" data-s="'+o[0]+'" aria-pressed="'+(m.selo===o[0])+'">'
         + '<span class="amostra">'+htmlSelo({ selo:o[0], mono:m.mono })+'</span>'+o[1]+'</button>').join("")
@@ -2105,11 +2805,24 @@ function folhaMarca(){
   });
   document.getElementById("mMono").addEventListener("input", previa);
 
+  const esc2 = document.getElementById("mEscolher");
+  if(esc2) esc2.addEventListener("click", () => document.getElementById("imagem").click());
+  const tirar2 = document.getElementById("mTirar");
+  if(tirar2) tirar2.addEventListener("click", () => {
+    estado.marca = Object.assign({}, estado.marca || {}, { img:"", mod:agora() });
+    mudou(); desenhar(); folhaMarca(); brinde("Imagem removida.");
+  });
+
   document.getElementById("mSalvar").addEventListener("click", () => {
+    const t = document.getElementById("mTitulo").value.trim();
+    const sb = document.getElementById("mSub").value.trim();
+    if(t !== (estado.titulo||"")){ estado.titulo = t || "Central do Gabinete"; estado.tituloMod = agora(); }
+    if(sb !== (estado.subtitulo||"")){ estado.subtitulo = sb; estado.subMod = agora(); }
     estado.marca = {
       selo: document.querySelector('#mSelo button[aria-pressed="true"]').dataset.s,
       mono: (document.getElementById("mMono").value.trim() || "CG").slice(0,3).toUpperCase(),
       cor:  document.querySelector('#mCor button[aria-pressed="true"]').dataset.c,
+      img:  (estado.marca || {}).img || "",
       mod:  agora()
     };
     fecharFolha(); mudou(); desenhar(); brinde("Identidade atualizada para a equipe.");
@@ -2264,6 +2977,7 @@ document.addEventListener("click", e => {
       estado.colunas[k.id] = k; logar("criou a coluna “" + v + "” em " + p.nome); mudou(); desenhar();
     });
     if(a === "renomear-coluna") folhaColunas();
+    if(a === "pastas") folhaPastas();
     if(a === "equipe") folhaEquipe();
     if(a === "aprovacoes") folhaAprovacoes();
     if(a === "permissoes") folhaPermissoes();
@@ -2319,7 +3033,8 @@ document.addEventListener("click", e => {
 
   const aprovar = e.target.closest("[data-aprovar]");
   if(aprovar){
-    const alvo = estado.cartoes[aprovar.dataset.aprovar] || (estado.contatos || {})[aprovar.dataset.aprovar];
+    const alvo = estado.cartoes[aprovar.dataset.aprovar] || (estado.contatos || {})[aprovar.dataset.aprovar]
+               || (estado.pessoal || {})[aprovar.dataset.aprovar];
     if(alvo && souDono()){
       const tipo = estado.cartoes[aprovar.dataset.aprovar] ? "tarefa" : "contato";
       if(tipo === "contato") atendimentosDe(alvo.id).forEach(t => { t.contatoId = ""; tocar(t); });
@@ -2332,7 +3047,8 @@ document.addEventListener("click", e => {
   }
   const recusar = e.target.closest("[data-recusar]");
   if(recusar){
-    const alvo = estado.cartoes[recusar.dataset.recusar] || (estado.contatos || {})[recusar.dataset.recusar];
+    const alvo = estado.cartoes[recusar.dataset.recusar] || (estado.contatos || {})[recusar.dataset.recusar]
+               || (estado.pessoal || {})[recusar.dataset.recusar];
     if(alvo && souDono()){
       delete alvo.pedidoDel;
       registrar(alvo, "n"); tocar(alvo);
@@ -2401,6 +3117,18 @@ document.addEventListener("click", e => {
     mudou(); desenhar(); folhaColunas();
     return;
   }
+  const renP = e.target.closest("[data-renomear-pasta]");
+  if(renP){
+    const p = estado.pastas[renP.dataset.renomearPasta];
+    if(p) pedirTexto("Nome da pasta", p.nome, v => {
+      logar("renomeou a pasta “" + p.nome + "” para “" + v + "”");
+      p.nome = v; tocar(p); mudou(); desenhar(); folhaPastas();
+    });
+    return;
+  }
+  const linkP = e.target.closest("[data-link-pasta]");
+  if(linkP){ folhaLinkDrive("pasta", linkP.dataset.linkPasta); return; }
+
   const col = e.target.closest("[data-col]");
   if(col){
     const k = estado.colunas[col.dataset.col];
@@ -2416,6 +3144,8 @@ document.addEventListener("click", e => {
     vista.busca = "";
     if(aba.dataset.prazos) vista.modo = "prazos";
     else if(aba.dataset.contatos) vista.modo = "contatos";
+    else if(aba.dataset.admin) vista.modo = "admin";
+    else if(aba.dataset.pessoal) vista.modo = "pessoal";
     else { vista.pasta = aba.dataset.pasta; vista.modo = "quadro"; }
     desenhar();
     return;
@@ -2424,11 +3154,21 @@ document.addEventListener("click", e => {
   const add = e.target.closest("[data-addcol]");
   if(add){ folhaCartao(null, add.dataset.addcol); return; }
 
+  const lancBt = e.target.closest("[data-lanc]");
+  if(lancBt){ folhaLancamento(lancBt.dataset.lanc); return; }
+  const pessoaBt = e.target.closest("[data-pessoa]");
+  if(pessoaBt){ folhaPessoa(pessoaBt.dataset.pessoa); return; }
+
   const fichaBt = e.target.closest("[data-contato]");
   if(fichaBt){ folhaContato(fichaBt.dataset.contato); return; }
 
+  const vp = e.target.closest("[data-vprazo]");
+  if(vp){ vista.prazoVista = vp.dataset.vprazo; vista.diaPrazo = null; desenharPrazos(); return; }
+
   const linha = e.target.closest(".linha-item");
   if(linha){ folhaCartao(linha.dataset.cartao); return; }
+
+  if(e.target.closest("a.drive, a.faixa-drive")) return;   // deixa o link abrir sozinho
 
   const cartao = e.target.closest(".cartao");
   if(cartao && !arrastou){ folhaCartao(cartao.dataset.cartao); return; }
@@ -2455,8 +3195,25 @@ document.getElementById("btAtualizar").addEventListener("click", () => {
   location.replace(location.pathname + "?v=" + Date.now());
 });
 
+document.getElementById("imagem").addEventListener("change", async e => {
+  const f = e.target.files[0];
+  e.target.value = "";
+  if(!f) return;
+  if(f.size > 6 * 1024 * 1024){ brinde("Imagem muito grande. Use uma de até 6 MB."); return; }
+  try{
+    const dados = await encolherImagem(f);
+    estado.marca = Object.assign({ selo:"carimbo", mono:"CG", cor:"#C8A63C" }, estado.marca || {},
+      { img:dados, mod:agora() });
+    mudou(); desenhar();
+    if(folha.classList.contains("on")) folhaMarca();
+    brinde("Imagem aplicada (" + Math.round(dados.length/1024) + " KB).");
+  }catch(err){ brinde("Não consegui usar essa imagem."); }
+});
+
 document.getElementById("fab").addEventListener("click", () => {
   if(vista.modo === "contatos") folhaContato(null);
+  else if(vista.modo === "admin") folhaLancamento(null);
+  else if(vista.modo === "pessoal") folhaPessoa(null);
   else folhaCartao(null, null);
 });
 document.getElementById("btMenu").addEventListener("click", folhaMenu);
@@ -2497,10 +3254,24 @@ document.addEventListener("pointerdown", e => {
   inicio = { x:e.clientX, y:e.clientY };
   if(e.target.closest(".pega")){ e.preventDefault(); comecar(e, cartao); return; }
   clearTimeout(temporizador);
-  temporizador = setTimeout(() => { temporizador = null; comecar(e, cartao); }, 250);
+  const guardado = { clientX:e.clientX, clientY:e.clientY };
+  temporizador = setTimeout(() => { temporizador = null; comecar(guardado, cartao); }, 220);
 }, { passive:false });
 
+// segurar o dedo sobre um cartão não abre menu de seleção do sistema
+document.addEventListener("contextmenu", e => {
+  if(e.target.closest && e.target.closest(".cartao")) e.preventDefault();
+});
+document.addEventListener("selectstart", e => {
+  if(arrasto || (temporizador && e.target.closest && e.target.closest(".cartao"))) e.preventDefault();
+});
+
 function comecar(e, cartao){
+  // o navegador tende a selecionar o texto do cartão ao segurar; isso desfaz
+  try{
+    const sel = window.getSelection();
+    if(sel && sel.removeAllRanges) sel.removeAllRanges();
+  }catch(err){}
   const r = cartao.getBoundingClientRect();
   const fantasma = cartao.cloneNode(true);
   fantasma.classList.add("fantasma");
@@ -2674,14 +3445,16 @@ document.addEventListener("keydown", e => {
     brinde("Convite recebido. Falta seu nome e a senha do quadro.");
   }else if(cfg.url && cfg.chave){
     if(cfg.modo === "login"){
-      if(sessao) Sinc.conectar(true);
+      if(sessao) conexaoInicial = Sinc.conectar(true);
       else folhaLogin("email", "");
     }
-    else if(cfg.senha){ Sinc.conectar(true); }
+    else if(cfg.senha){ conexaoInicial = Sinc.conectar(true); }
     else { brinde("Digite a senha do quadro para sincronizar."); folhaSinc(); }
   }
   if(semArmazenamento) brinde("Sessão sem salvamento automático. Exporte backups.");
+
 })();
+
 
 })();
 </script>
