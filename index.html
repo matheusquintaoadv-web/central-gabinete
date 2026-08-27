@@ -508,6 +508,18 @@
   .cracha.dono{background:#F6EFD9;border-color:#E9D6A8;color:var(--ambar)}
   .cracha.ver{margin-left:auto;color:var(--tinta-3)}
   .cracha[disabled]{opacity:.5}
+  .linha-acesso{
+    display:flex;align-items:center;gap:10px;width:100%;text-align:left;
+    background:var(--carta);border:1px solid var(--linha);border-radius:10px;
+    padding:11px 12px;margin-bottom:7px;
+  }
+  .linha-acesso.com-gerente{border-color:#D9CBA0;background:#FDFBF4}
+  .linha-acesso .pn{flex:0 0 auto;font-size:13.5px;font-weight:500;max-width:45%;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .linha-acesso .ps{flex:1;font-size:11.5px;color:var(--texto-2);text-align:right;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .linha-acesso .pi{flex:0 0 auto;color:#B4BECD;font-size:17px;line-height:1}
+  .linha-acesso[disabled]{opacity:.65}
 
   /* ---------- tela de entrada ---------- */
   body.sem-abas main{padding-top:calc(var(--topo) + var(--safe-t))}
@@ -618,7 +630,7 @@
    então duas pessoas podem mexer no quadro ao mesmo tempo.
    ============================================================ */
 
-const VERSAO_APP = 13;                   // sobe a cada versão nova do arquivo
+const VERSAO_APP = 14;                   // sobe a cada versão nova do arquivo
 const CHAVE_DOC = "gabinete-doc:v2";
 const CHAVE_CFG = "gabinete-cfg:v2";
 const CHAVE_SES = "gabinete-sessao:v1";
@@ -747,9 +759,11 @@ function tipoDrive(url){
 }
 function linkValido(u){ return /^https?:\/\//i.test(String(u||"").trim()); }
 
-function folhaGerentePasta(pid){
+function folhaGerentePasta(pid, volta){
   const p = estado.pastas[pid];
   if(!p) return;
+  volta = volta || "pastas";
+  const voltar = () => { if(volta === "permissoes") folhaPermissoes(); else folhaPastas(); };
   if(!souGerente()){ brinde("Só " + (nomeDono() || "o responsável") + " e a gerência definem isso."); return; }
   const atual = p.gerente || "";
   abrirFolha(
@@ -757,8 +771,8 @@ function folhaGerentePasta(pid){
     + '<p>Com gerente definido, só ele edita esta pasta — os demais passam a ver sem poder alterar. '
     + 'Sem gerente, todo mundo edita normalmente. Você e a gerência geral editam de qualquer jeito.</p>'
     + '<div class="pessoas" style="margin-bottom:8px">'
-    + '<button type="button" class="nenhum" data-setger="" data-pasta-alvo="'+pid+'" aria-pressed="'+(!atual)+'">Aberta a todos</button>'
-    + equipe().map(m => '<button type="button" data-setger="'+m.id+'" data-pasta-alvo="'+pid+'" aria-pressed="'+(atual===m.id)+'">'
+    + '<button type="button" class="nenhum" data-setger="" data-pasta-alvo="'+pid+'" data-volta="'+volta+'" aria-pressed="'+(!atual)+'">Aberta a todos</button>'
+    + equipe().map(m => '<button type="button" data-setger="'+m.id+'" data-pasta-alvo="'+pid+'" data-volta="'+volta+'" aria-pressed="'+(atual===m.id)+'">'
         + '<span class="av" style="background:'+cor(m.nome)+'">'+esc(iniciais(m.nome))+'</span>'+esc(m.nome)+'</button>').join("")
     + '</div>'
     + (equipe().length ? '' : '<div class="dica">Ninguém entrou no quadro ainda.</div>')
@@ -770,8 +784,9 @@ function folhaGerentePasta(pid){
           + '</div><div class="dica">Na segunda opção, a pessoa cria tarefas e edita as que estão no nome dela — '
           + 'as dos outros ela só enxerga.</div></div>'
         : '')
-    + '<div class="acoes"><button class="btn claro" data-fechar="1">Fechar</button></div>'
+    + '<div class="acoes"><button class="btn claro" id="pgVoltar">Voltar</button></div>'
   );
+  document.getElementById("pgVoltar").addEventListener("click", voltar);
   const md = document.getElementById("pgModo");
   if(md) md.addEventListener("click", e => {
     const b = e.target.closest("button[data-pm]");
@@ -782,7 +797,7 @@ function folhaGerentePasta(pid){
     if(p2.modo === "leitura") delete p2.modo;
     tocar(p2);
     logar("mudou o acesso da pasta " + p2.nome + " para “" + b.dataset.pm + "”");
-    mudou(); desenhar(); folhaGerentePasta(pid);
+    mudou(); desenhar(); folhaGerentePasta(pid, volta);
   });
 }
 
@@ -2708,8 +2723,32 @@ function folhaPermissoes(){
      + '<button type="button" data-x="autor" aria-pressed="'+(r==="autor")+'"'+(posso?"":" disabled")+'>Quem criou pode excluir o que criou</button>'
      + '<button type="button" data-x="livre" aria-pressed="'+(r==="livre")+'"'+(posso?"":" disabled")+'>Qualquer um pode excluir</button>'
      + '</div></div>';
-  h += '<div class="aviso">Isto organiza a equipe, não é tranca. Como todo mundo entra com a mesma senha e digita o próprio nome, '
-     + 'quem quiser contornar consegue. O que fica sempre é o registro de quem fez o quê.</div>';
+  // --- acesso pasta a pasta ---
+  h += '<div class="campo"><label>Acesso por pasta</label>'
+     + '<div class="dica" style="margin:0 0 8px">Sem gerente, todos editam. Com gerente, os demais só veem — '
+     + 'ou mexem apenas nas tarefas em que são responsáveis, se você escolher assim.</div>';
+  const ps = pastas();
+  if(!ps.length){
+    h += '<div class="dica">Nenhuma pasta criada.</div>';
+  }else{
+    ps.forEach(p => {
+      const g = gerenteDaPasta(p.id);
+      const sit = g
+        ? esc(nomeGerente(p.id)) + (modoPasta(p.id) === "propria" ? " · demais: as suas" : " · demais: só veem")
+        : "aberta a todos";
+      h += '<button class="linha-acesso'+(g?" com-gerente":"")+'" data-acesso-pasta="'+p.id+'"'+(posso?"":" disabled")+'>'
+         + '<span class="pn">'+esc(p.nome)+'</span>'
+         + '<span class="ps">'+sit+'</span>'
+         + (posso ? '<span class="pi">›</span>' : '') + '</button>';
+    });
+  }
+  h += '</div>';
+
+  h += '<div class="aviso">' + (cfg.modo === "login"
+     ? 'Com login por e-mail, a identidade é conferida pelo servidor a cada acesso — estas regras valem de verdade. '
+       + 'Tudo o que a equipe faz continua registrado com nome e hora.'
+     : 'Isto organiza a equipe, não é tranca. Como todo mundo entra com a mesma senha e digita o próprio nome, '
+       + 'quem quiser contornar consegue. O que fica sempre é o registro de quem fez o quê.') + '</div>';
   if(posso) h += '<div class="acoes"><button class="btn claro" data-fechar="1">Cancelar</button>'
      + '<button class="btn" id="pSalvar">Salvar</button></div>';
   else h += '<div class="acoes"><button class="btn claro" data-fechar="1">Fechar</button></div>';
@@ -3467,8 +3506,10 @@ document.addEventListener("click", e => {
       tocar(alvo);
       logar(novo ? ("definiu " + (quem(novo)||{}).nome + " como gerente de " + alvo.nome)
                  : ("abriu a pasta " + alvo.nome + " para todos"));
+      const v = setGer.dataset.volta || "pastas";
       mudou(); desenhar();
-      if(novo) folhaGerentePasta(alvo.id); else { fecharFolha(); folhaPastas(); }
+      if(novo) folhaGerentePasta(alvo.id, v);
+      else { fecharFolha(); if(v === "permissoes") folhaPermissoes(); else folhaPastas(); }
       brinde(novo ? ("Gerente definido: " + (quem(novo)||{}).nome + ".") : "Pasta aberta a todos.");
     }
     return;
@@ -3525,7 +3566,10 @@ document.addEventListener("click", e => {
     return;
   }
   const gerP = e.target.closest("[data-gerente-pasta]");
-  if(gerP){ folhaGerentePasta(gerP.dataset.gerentePasta); return; }
+  if(gerP){ folhaGerentePasta(gerP.dataset.gerentePasta, "pastas"); return; }
+
+  const acP = e.target.closest("[data-acesso-pasta]");
+  if(acP){ folhaGerentePasta(acP.dataset.acessoPasta, "permissoes"); return; }
 
   const linkP = e.target.closest("[data-link-pasta]");
   if(linkP){ folhaLinkDrive("pasta", linkP.dataset.linkPasta); return; }
