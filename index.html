@@ -78,10 +78,25 @@
 
   .pastas{
     position:fixed;z-index:39;left:0;right:0;top:calc(var(--topo) + var(--safe-t));
-    background:var(--tinta-2);height:36px;display:flex;gap:2px;
-    overflow-x:auto;scrollbar-width:none;padding:0 8px;
+    background:var(--tinta-2);height:42px;display:flex;gap:2px;
+    overflow-x:auto;overflow-y:hidden;padding:0 8px;
+    scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.32) transparent;
   }
-  .pastas::-webkit-scrollbar{display:none}
+  .pastas::-webkit-scrollbar{height:6px}
+  .pastas::-webkit-scrollbar-track{background:transparent}
+  .pastas::-webkit-scrollbar-thumb{background:rgba(255,255,255,.28);border-radius:3px}
+  .pastas::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.45)}
+
+  /* setas para percorrer as abas quando não cabem todas */
+  .seta-abas{
+    position:fixed;z-index:42;top:calc(var(--topo) + var(--safe-t));
+    width:30px;height:42px;display:none;place-items:center;
+    color:#fff;font-size:20px;line-height:1;
+  }
+  .seta-abas.on{display:grid}
+  .seta-abas.esq{left:0;background:linear-gradient(90deg,var(--tinta-2) 55%,transparent)}
+  .seta-abas.dir{right:0;background:linear-gradient(270deg,var(--tinta-2) 55%,transparent)}
+  .seta-abas:active{color:var(--ouro)}
   .aba{
     flex:0 0 auto;display:flex;align-items:center;padding:0 12px;
     font-size:11px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;
@@ -92,13 +107,22 @@
   .aba.filtro{color:var(--ouro)}
   .aba .n{font-family:var(--mono);font-size:10px;margin-left:5px;opacity:.75}
 
-  main{padding-top:calc(var(--topo) + var(--safe-t) + 36px);height:100dvh}
+  main{padding-top:calc(var(--topo) + var(--safe-t) + 42px);height:100dvh}
 
   .trilho{
     display:flex;gap:12px;height:100%;overflow-x:auto;overflow-y:hidden;
-    scroll-snap-type:x proximity;padding:12px 14px calc(16px + var(--safe-b));scrollbar-width:none;
+    scroll-snap-type:x proximity;padding:12px 14px calc(14px + var(--safe-b));
+    scrollbar-width:thin;scrollbar-color:#AEBACB transparent;
   }
-  .trilho::-webkit-scrollbar{display:none}
+  .trilho::-webkit-scrollbar{height:11px}
+  .trilho::-webkit-scrollbar-track{background:transparent}
+  .trilho::-webkit-scrollbar-thumb{
+    background:#AEBACB;border-radius:6px;border:3px solid transparent;background-clip:content-box;
+  }
+  .trilho::-webkit-scrollbar-thumb:hover{background:#8D9BB0;background-clip:content-box;border:3px solid transparent}
+  @media(min-width:720px){
+    .trilho{scroll-snap-type:none}   /* no computador a rolagem é livre */
+  }
   .coluna{
     flex:0 0 82vw;max-width:330px;scroll-snap-align:center;
     display:flex;flex-direction:column;min-height:0;
@@ -115,7 +139,14 @@
   .lista{
     flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;
     padding:10px;display:flex;flex-direction:column;gap:9px;
+    scrollbar-width:thin;scrollbar-color:#C2CCDA transparent;
   }
+  .lista::-webkit-scrollbar{width:9px}
+  .lista::-webkit-scrollbar-track{background:transparent}
+  .lista::-webkit-scrollbar-thumb{
+    background:#C2CCDA;border-radius:5px;border:2px solid transparent;background-clip:content-box;
+  }
+  .lista::-webkit-scrollbar-thumb:hover{background:#9AA8BC;background-clip:content-box;border:2px solid transparent}
 
   .cartao{
     position:relative;background:var(--carta);border-radius:10px;border:1px solid var(--linha);
@@ -198,7 +229,16 @@
   .lista.alvo{background:rgba(200,166,60,.05)}
   .nada{padding:22px 14px;text-align:center;color:var(--texto-2);font-size:12.5px;line-height:1.6}
 
-  .rolo{height:100%;overflow-y:auto;padding:14px 14px calc(30px + var(--safe-b))}
+  .rolo{
+    height:100%;overflow-y:auto;padding:14px 14px calc(30px + var(--safe-b));
+    scrollbar-width:thin;scrollbar-color:#C2CCDA transparent;
+  }
+  .rolo::-webkit-scrollbar{width:9px}
+  .rolo::-webkit-scrollbar-track{background:transparent}
+  .rolo::-webkit-scrollbar-thumb{background:#C2CCDA;border-radius:5px;border:2px solid transparent;background-clip:content-box}
+  .folha{scrollbar-width:thin;scrollbar-color:#C2CCDA transparent}
+  .folha::-webkit-scrollbar{width:9px}
+  .folha::-webkit-scrollbar-thumb{background:#C2CCDA;border-radius:5px;border:2px solid transparent;background-clip:content-box}
   .filtro-linha{margin-bottom:12px}
   .filtro-linha input{
     width:100%;background:var(--carta);border:1px solid var(--linha);
@@ -474,6 +514,8 @@
 </div>
 
 <nav class="pastas" id="abas" role="tablist"></nav>
+<button class="seta-abas esq" id="setaE" aria-label="Abas anteriores">‹</button>
+<button class="seta-abas dir" id="setaD" aria-label="Próximas abas">›</button>
 <main id="tela"></main>
 <button class="fab" id="fab" aria-label="Nova tarefa">+</button>
 
@@ -499,7 +541,7 @@
    então duas pessoas podem mexer no quadro ao mesmo tempo.
    ============================================================ */
 
-const VERSAO_APP = 10;                   // sobe a cada versão nova do arquivo
+const VERSAO_APP = 11;                   // sobe a cada versão nova do arquivo
 const CHAVE_DOC = "gabinete-doc:v2";
 const CHAVE_CFG = "gabinete-cfg:v2";
 const CHAVE_SES = "gabinete-sessao:v1";
@@ -1948,9 +1990,22 @@ function desenhar(){
   else if(vista.modo === "admin") desenharAdmin();
   else if(vista.modo === "pessoal") desenharPessoal();
   else desenharQuadro();
+  setTimeout(ajustarSetas, 0);
   document.getElementById("fab").style.display =
     ["quadro","contatos","admin","pessoal"].indexOf(vista.modo) > -1 ? "grid" : "none";
   pintarStatus();
+}
+
+/** mostra as setas da barra de abas só quando há aba escondida */
+function ajustarSetas(){
+  const nav = document.getElementById("abas");
+  const e = document.getElementById("setaE");
+  const d = document.getElementById("setaD");
+  if(!nav || !e || !d) return;
+  const sobra = nav.scrollWidth - nav.clientWidth;
+  if(sobra < 8){ e.classList.remove("on"); d.classList.remove("on"); return; }
+  e.classList.toggle("on", nav.scrollLeft > 4);
+  d.classList.toggle("on", nav.scrollLeft < sobra - 4);
 }
 
 /* =================== folhas =================== */
@@ -3217,6 +3272,41 @@ document.getElementById("fab").addEventListener("click", () => {
   else folhaCartao(null, null);
 });
 document.getElementById("btMenu").addEventListener("click", folhaMenu);
+
+(function ligarSetas(){
+  const nav = document.getElementById("abas");
+  const passo = () => Math.max(120, Math.round(nav.clientWidth * 0.7));
+  document.getElementById("setaE").addEventListener("click", () => {
+    nav.scrollBy({ left:-passo(), behavior:"smooth" });
+  });
+  document.getElementById("setaD").addEventListener("click", () => {
+    nav.scrollBy({ left:passo(), behavior:"smooth" });
+  });
+  nav.addEventListener("scroll", ajustarSetas);
+  window.addEventListener("resize", ajustarSetas);
+  // a roda do mouse percorre as abas quando o cursor está sobre elas
+  nav.addEventListener("wheel", ev => {
+    if(Math.abs(ev.deltaY) <= Math.abs(ev.deltaX)) return;
+    nav.scrollLeft += ev.deltaY;
+    ev.preventDefault();
+  }, { passive:false });
+})();
+
+/** no computador, a roda do mouse percorre as colunas lado a lado */
+document.addEventListener("wheel", e => {
+  const trilho = document.getElementById("trilho");
+  if(!trilho || !trilho.contains(e.target)) return;
+  if(Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+  const lista = e.target.closest ? e.target.closest(".lista") : null;
+  if(lista && lista.scrollHeight > lista.clientHeight + 2){
+    const noTopo = lista.scrollTop <= 0;
+    const noFim = lista.scrollTop + lista.clientHeight >= lista.scrollHeight - 1;
+    // só assume a rolagem horizontal depois que a coluna chegou ao fim
+    if(!((e.deltaY < 0 && noTopo) || (e.deltaY > 0 && noFim))) return;
+  }
+  trilho.scrollLeft += e.deltaY;
+  e.preventDefault();
+}, { passive:false });
 document.getElementById("marca").addEventListener("click", folhaSinc);
 
 document.getElementById("btBusca").addEventListener("click", () => {
