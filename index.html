@@ -223,6 +223,9 @@
     font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
     color:var(--ok);background:#E4F2EA;padding:2px 6px;border-radius:5px;
   }
+  .cartao.travado{background:#F8F9FB}
+  .cartao.travado::before{opacity:.45}
+  .cartao.travado .feito-bt{opacity:.35}
   .cartao.origem{opacity:.28}
   .fantasma{position:fixed;z-index:200;pointer-events:none;box-shadow:0 14px 34px rgba(14,27,54,.28);transform:rotate(1.4deg);border-color:var(--ouro)}
   .vazio-lugar{border:1.5px dashed var(--ouro);background:rgba(200,166,60,.09);border-radius:10px;flex:0 0 auto}
@@ -479,6 +482,80 @@
     display:grid;place-items:center;font-size:9px;color:var(--texto-2);text-align:center;line-height:1.2;
   }
 
+  .faixa-lida{
+    margin:0 14px 10px;background:#EEF1F6;border:1px solid var(--linha);border-radius:11px;
+    padding:9px 12px;font-size:12.5px;color:var(--texto-2);
+  }
+  .trilho.trancado .cartao{cursor:default}
+  .cartao-membro{
+    background:var(--carta);border:1px solid var(--linha);border-radius:12px;
+    padding:11px 12px;margin-bottom:9px;
+  }
+  .cartao-membro .topo{display:flex;align-items:center;gap:11px}
+  .cartao-membro .av{
+    width:32px;height:32px;flex:0 0 32px;border-radius:50%;color:#fff;
+    font-size:11.5px;font-weight:700;display:grid;place-items:center;
+  }
+  .cartao-membro .txt{flex:1;min-width:0;font-size:14.5px;font-weight:500}
+  .cartao-membro .txt small{display:block;font-size:11.5px;color:var(--texto-2);font-weight:400}
+  .cartao-membro .tirar{color:var(--alerta);padding:4px 8px;font-size:14px}
+  .cartao-membro .papeis{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .cracha{
+    font-size:10.5px;font-weight:600;letter-spacing:.04em;padding:5px 10px;border-radius:20px;
+    border:1px solid var(--linha);background:var(--papel);color:var(--texto-2);
+  }
+  .cracha.on{background:var(--tinta);border-color:var(--tinta);color:#fff}
+  .cracha.dono{background:#F6EFD9;border-color:#E9D6A8;color:var(--ambar)}
+  .cracha.ver{margin-left:auto;color:var(--tinta-3)}
+  .cracha[disabled]{opacity:.5}
+
+  /* ---------- tela de entrada ---------- */
+  body.sem-abas main{padding-top:calc(var(--topo) + var(--safe-t))}
+  .entrada{
+    height:100%;overflow-y:auto;display:flex;flex-direction:column;align-items:center;
+    padding:26px 20px calc(28px + var(--safe-b));text-align:center;
+  }
+  .entrada .e-selo{
+    color:var(--ouro);transform:scale(1.9);margin:10px 0 22px;
+  }
+  .entrada h1{margin:0;font-size:22px;font-weight:600;letter-spacing:-.015em;color:var(--tinta)}
+  .entrada .e-sub{
+    margin:5px 0 0;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--texto-2);
+  }
+  .entrada .aviso{max-width:360px;width:100%;margin-top:18px;text-align:left}
+  .e-caixa{
+    width:100%;max-width:360px;margin-top:24px;background:var(--carta);
+    border:1px solid var(--linha);border-radius:14px;padding:16px;text-align:left;
+    box-shadow:0 2px 10px rgba(14,27,54,.05);
+  }
+  .e-caixa label{
+    display:block;font-size:10px;font-weight:600;letter-spacing:.11em;
+    text-transform:uppercase;color:var(--texto-2);margin-bottom:6px;
+  }
+  .e-caixa input{
+    width:100%;border:1px solid var(--linha);border-radius:10px;
+    padding:13px 12px;font-size:16px;background:var(--papel);
+  }
+  .e-caixa input.e-codigo{
+    font-family:var(--mono);font-size:21px;letter-spacing:.24em;text-align:center;
+  }
+  .e-caixa .btn{width:100%;margin-top:11px}
+  .e-passos{
+    width:100%;max-width:360px;margin-top:18px;text-align:left;
+    font-size:11.5px;line-height:1.55;color:var(--texto-2);
+  }
+  .e-passos strong{
+    display:block;font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;
+    color:var(--tinta-3);margin-bottom:6px;
+  }
+  .e-passos ol{margin:0 0 8px;padding-left:18px}
+  .e-passos li{margin-bottom:3px}
+  .e-passos p{margin:0 0 6px}
+  .e-links{display:flex;gap:14px;margin-top:16px}
+  .e-links button{font-size:12.5px;color:var(--tinta-3);text-decoration:underline}
+  .e-rodape{margin-top:auto;padding-top:26px;display:flex;gap:16px}
+  .e-rodape button{font-size:11.5px;color:#9AA6BE}
+
   .brinde{
     position:fixed;left:50%;bottom:calc(96px + var(--safe-b));z-index:60;
     transform:translate(-50%,14px);opacity:0;transition:.2s;background:var(--tinta);color:#fff;
@@ -541,7 +618,7 @@
    então duas pessoas podem mexer no quadro ao mesmo tempo.
    ============================================================ */
 
-const VERSAO_APP = 11;                   // sobe a cada versão nova do arquivo
+const VERSAO_APP = 13;                   // sobe a cada versão nova do arquivo
 const CHAVE_DOC = "gabinete-doc:v2";
 const CHAVE_CFG = "gabinete-cfg:v2";
 const CHAVE_SES = "gabinete-sessao:v1";
@@ -669,6 +746,45 @@ function tipoDrive(url){
   return null;
 }
 function linkValido(u){ return /^https?:\/\//i.test(String(u||"").trim()); }
+
+function folhaGerentePasta(pid){
+  const p = estado.pastas[pid];
+  if(!p) return;
+  if(!souGerente()){ brinde("Só " + (nomeDono() || "o responsável") + " e a gerência definem isso."); return; }
+  const atual = p.gerente || "";
+  abrirFolha(
+    '<h2>Gerente de '+esc(p.nome)+'</h2>'
+    + '<p>Com gerente definido, só ele edita esta pasta — os demais passam a ver sem poder alterar. '
+    + 'Sem gerente, todo mundo edita normalmente. Você e a gerência geral editam de qualquer jeito.</p>'
+    + '<div class="pessoas" style="margin-bottom:8px">'
+    + '<button type="button" class="nenhum" data-setger="" data-pasta-alvo="'+pid+'" aria-pressed="'+(!atual)+'">Aberta a todos</button>'
+    + equipe().map(m => '<button type="button" data-setger="'+m.id+'" data-pasta-alvo="'+pid+'" aria-pressed="'+(atual===m.id)+'">'
+        + '<span class="av" style="background:'+cor(m.nome)+'">'+esc(iniciais(m.nome))+'</span>'+esc(m.nome)+'</button>').join("")
+    + '</div>'
+    + (equipe().length ? '' : '<div class="dica">Ninguém entrou no quadro ainda.</div>')
+    + (atual
+        ? '<div class="campo" style="margin-top:14px"><label>O que os demais podem fazer</label>'
+          + '<div class="segm" id="pgModo" style="flex-direction:column">'
+          + '<button type="button" data-pm="leitura" aria-pressed="'+(modoPasta(pid)!=="propria")+'">Só ver</button>'
+          + '<button type="button" data-pm="propria" aria-pressed="'+(modoPasta(pid)==="propria")+'">Mexer só nas tarefas em que forem responsáveis</button>'
+          + '</div><div class="dica">Na segunda opção, a pessoa cria tarefas e edita as que estão no nome dela — '
+          + 'as dos outros ela só enxerga.</div></div>'
+        : '')
+    + '<div class="acoes"><button class="btn claro" data-fechar="1">Fechar</button></div>'
+  );
+  const md = document.getElementById("pgModo");
+  if(md) md.addEventListener("click", e => {
+    const b = e.target.closest("button[data-pm]");
+    if(!b) return;
+    const p2 = estado.pastas[pid];
+    if(!p2) return;
+    p2.modo = b.dataset.pm;
+    if(p2.modo === "leitura") delete p2.modo;
+    tocar(p2);
+    logar("mudou o acesso da pasta " + p2.nome + " para “" + b.dataset.pm + "”");
+    mudou(); desenhar(); folhaGerentePasta(pid);
+  });
+}
 
 function folhaLinkDrive(tipo, alvoId){
   const alvo = tipo === "pasta" ? estado.pastas[alvoId] : estado.cartoes[alvoId];
@@ -801,10 +917,83 @@ function nomeDono(){
   return m ? m.nome : "";
 }
 function regraExclusao(){ return (estado.regras || {}).exclusao || "dono"; }
+
+/* ---------- níveis de acesso ---------- */
+/** identificador do membro que está usando o app agora */
+function meuId(){ return idMembro(cfg.eu); }
+
+/** gerência geral: mexe em qualquer pasta, coluna ou cartão */
+function souGerente(){
+  if(souDono()) return true;
+  const m = quem(meuId());
+  return !!(m && m.gerente);
+}
+/** acesso à aba Administração (verba do gabinete) */
+function vejoAdmin(){
+  if(souDono()) return true;
+  const m = quem(meuId());
+  return !!(m && (m.gerente || m.admin));
+}
+function gerenteDaPasta(pid){
+  const p = estado.pastas[pid];
+  const g = p ? (p.gerente || "") : "";
+  return (g && quem(g) && !quem(g).del) ? g : "";
+}
+/** como a pasta trata quem não é o gerente: "leitura" (só olha) ou "propria" (mexe no que é responsável) */
+function modoPasta(pid){
+  const p = estado.pastas[pid];
+  return (p && p.modo === "propria") ? "propria" : "leitura";
+}
+
+/** mexer na estrutura da pasta: colunas, nome, exclusão */
+function podeEditarPasta(pid){
+  if(souGerente()) return true;
+  const g = gerenteDaPasta(pid);
+  if(!g) return true;
+  return g === meuId();
+}
+
+/** criar tarefa nova nesta pasta */
+function podeCriarNaPasta(pid){
+  if(podeEditarPasta(pid)) return true;
+  return modoPasta(pid) === "propria";
+}
+
+/** mexer numa tarefa específica */
+function podeEditarCartao(c){
+  if(!c) return false;
+  const k = estado.colunas[c.coluna];
+  if(!k) return false;
+  if(podeEditarPasta(k.pasta)) return true;
+  if(modoPasta(k.pasta) !== "propria") return false;
+  return !!c.resp && c.resp === meuId();
+}
+
+/** true quando a pessoa não pode alterar absolutamente nada na pasta */
+function soLeitura(pid){ return !podeEditarPasta(pid) && modoPasta(pid) !== "propria"; }
+
+/** frase curta que explica a situação da pasta para quem não é gerente */
+function avisoPasta(pid){
+  if(podeEditarPasta(pid)) return "";
+  const g = nomeGerente(pid);
+  return modoPasta(pid) === "propria"
+    ? "Gerência de " + g + " — você mexe só nas tarefas em que é responsável"
+    : "Somente leitura — gerência de " + g;
+}
+function nomeGerente(pid){
+  const m = quem(gerenteDaPasta(pid));
+  return m ? m.nome : "";
+}
 function podeExcluir(alvo){
+  if(souGerente()) return true;
+  // gerente da pasta manda no que está dentro dela
+  if(alvo && alvo.coluna){
+    const k = estado.colunas[alvo.coluna];
+    if(k && gerenteDaPasta(k.pasta) === meuId()) return true;
+    if(k && !podeEditarCartao(alvo)) return false;
+  }
   const r = regraExclusao();
   if(r === "livre") return true;
-  if(souDono()) return true;
   if(r === "autor") return !!alvo.criadoPor && alvo.criadoPor === idMembro(cfg.eu);
   return false;
 }
@@ -1262,7 +1451,9 @@ const Sinc = {
       if(!mid) return;
       const atual = estado.membros[mid];
       if(!atual || atual.nome !== m.nome || atual.del){
-        estado.membros[mid] = { id:mid, nome:m.nome, visto:agora(), mod:agora() };
+        const novo = Object.assign({}, atual || {}, { id:mid, nome:m.nome, visto:agora(), mod:agora() });
+        delete novo.del;
+        estado.membros[mid] = novo;
         mexeu = true;
       }
     });
@@ -1274,7 +1465,7 @@ const Sinc = {
     if(cfg.modo === "senha" && !cfg.senha){ this.desligar(); return false; }
     if(cfg.modo === "login" && !(await Auth.valido())){
       this.desligar();
-      if(!silencioso) folhaLogin();
+      if(!silencioso){ vista.semEntrar = false; desenhar(); }
       return false;
     }
     this.marcar("enviando");
@@ -1488,7 +1679,8 @@ function desenharAbas(){
   h += '<button class="aba prazos" role="tab" data-prazos="1" aria-selected="'+(vista.modo==="prazos")+'">Prazos</button>';
   h += '<button class="aba prazos" role="tab" data-contatos="1" aria-selected="'+(vista.modo==="contatos")+'">Contatos'
      + '<span class="n">'+agenda().length+'</span></button>';
-  h += '<button class="aba prazos" role="tab" data-admin="1" aria-selected="'+(vista.modo==="admin")+'">Administração</button>';
+  if(vejoAdmin())
+    h += '<button class="aba prazos" role="tab" data-admin="1" aria-selected="'+(vista.modo==="admin")+'">Administração</button>';
   h += '<button class="aba prazos" role="tab" data-pessoal="1" aria-selected="'+(vista.modo==="pessoal")+'">Pessoal'
      + '<span class="n">'+equipeRH().length+'</span></button>';
   h += '<button class="aba" data-nova="1" aria-selected="false">+ Pasta</button>';
@@ -1498,7 +1690,7 @@ function desenharAbas(){
 function htmlCartao(c){
   const p = rotuloPrazo(c.prazo);
   let h = '<article class="cartao'+(c.prioridade==="alta"?" alta":"")+(c.feito?" feito":"")
-        + (c.pedidoDel?" pedido-del":"")
+        + (c.pedidoDel?" pedido-del":"") + (podeEditarCartao(c) ? "" : " travado")
         + '" data-cartao="'+c.id+'" style="--faixa:'+cor(c.etiqueta)+'" tabindex="0">';
   h += '<div class="tit">'+esc(c.titulo)+'</div><div class="pe">';
   h += '<span class="protocolo">Nº '+String(c.n||0).padStart(4,"0")+'</span>';
@@ -1523,9 +1715,15 @@ function desenharQuadro(){
   if(!vista.pasta){ document.getElementById("tela").innerHTML = '<div class="rolo"><div class="nada">Nenhuma pasta.<br>Toque em “+ Pasta” para criar a primeira.</div></div>'; return; }
   const pAtual = estado.pastas[vista.pasta];
   const tdp = pAtual ? tipoDrive(pAtual.link) : null;
-  let h = tdp ? '<a class="faixa-drive" href="'+esc(pAtual.link)+'" target="_blank" rel="noopener">'
+  const aviso = avisoPasta(vista.pasta);
+  const trancada = soLeitura(vista.pasta);
+  const podeCriar = podeCriarNaPasta(vista.pasta);
+  let h = aviso
+    ? '<div class="faixa-lida">'+(trancada ? "🔒 " : "◑ ")+esc(aviso)+'</div>'
+    : '';
+  h += tdp ? '<a class="faixa-drive" href="'+esc(pAtual.link)+'" target="_blank" rel="noopener">'
     + tdp.i + ' ' + esc(pAtual.linkNome || tdp.r) + ' <span>abrir no Drive</span></a>' : '';
-  h += '<div class="trilho" id="trilho">';
+  h += '<div class="trilho' + (trancada ? " trancado" : "") + '" id="trilho">';
   colunas(vista.pasta).forEach(k => {
     const cs = cartoes(k.id)
       .filter(c => !vista.resp || c.resp === vista.resp)
@@ -1534,7 +1732,8 @@ function desenharQuadro(){
     const abertos = cs.filter(x => !x.feito).length;
     h += '<div class="cab"><h2>'+esc(k.nome)+'</h2><span class="qtd">'
        + (k.final ? cs.length : abertos + (cs.length !== abertos ? "/" + cs.length : "")) + '</span>'
-       + '<button class="mais" data-addcol="'+k.id+'" aria-label="Nova tarefa em '+esc(k.nome)+'">+</button></div>';
+       + (podeCriar ? '<button class="mais" data-addcol="'+k.id+'" aria-label="Nova tarefa em '+esc(k.nome)+'">+</button>' : '')
+       + '</div>';
     h += '<div class="lista" data-lista="'+k.id+'">';
     if(!cs.length) h += '<div class="nada">'+(vista.resp
       ? 'Nada aqui para essa pessoa.'
@@ -1947,6 +2146,102 @@ function folhaPessoa(pid){
   });
 }
 
+/** precisa entrar antes de usar? */
+function precisaEntrar(){
+  return cfg.modo === "login" && !!cfg.url && !!cfg.chave && !sessao && !vista.semEntrar;
+}
+
+function desenharEntrada(){
+  const passo = vista.entradaPasso || "email";
+  const m = estado.marca || {};
+  let h = '<div class="entrada">'
+    + '<div class="e-selo">' + htmlSelo(m) + '</div>'
+    + '<h1>' + esc(estado.titulo || "Central do Gabinete") + '</h1>'
+    + (estado.subtitulo ? '<p class="e-sub">' + esc(estado.subtitulo) + '</p>' : '');
+
+  if(vista.entradaErro) h += '<div class="aviso ruim">' + esc(vista.entradaErro) + '</div>';
+
+  if(passo === "email"){
+    h += '<div class="e-caixa">'
+      + '<label for="eEmail">Seu e-mail</label>'
+      + '<input id="eEmail" type="email" value="'+esc(vista.entradaEmail || "")+'" '
+      + 'placeholder="voce@exemplo.com.br" autocapitalize="off" autocomplete="email" spellcheck="false" inputmode="email">'
+      + '<button class="btn" id="eEnviar">Entrar</button>'
+      + '</div>'
+      + '<div class="e-passos">'
+      + '<strong>Como entrar</strong>'
+      + '<ol><li>Digite o e-mail que o gabinete cadastrou para você.</li>'
+      + '<li>Toque em Entrar — chega um código no seu e-mail.</li>'
+      + '<li>Digite o código aqui e pronto.</li></ol>'
+      + '<p>Não existe senha nem cadastro a preencher. Se o seu e-mail não estiver na lista do gabinete, '
+      + 'peça a quem cuida do quadro para incluir você.</p>'
+      + '</div>';
+  }else{
+    h += '<div class="e-caixa">'
+      + '<label for="eCodigo">Código enviado para ' + esc(vista.entradaEmail) + '</label>'
+      + '<input id="eCodigo" inputmode="numeric" maxlength="10" placeholder="Digite o código" '
+      + 'autocomplete="one-time-code" class="e-codigo">'
+      + '<button class="btn" id="eEntrar">Confirmar</button>'
+      + '</div>'
+      + '<div class="e-passos">'
+      + '<p>O código chega em segundos. Se não aparecer, confira a caixa de spam.</p>'
+      + '<p>Recebeu um <strong>link</strong> em vez de números? Toque no link do e-mail que você entra direto.</p>'
+      + '</div>'
+      + '<div class="e-links"><button data-eacao="voltar">Trocar de e-mail</button>'
+      + '<button data-eacao="reenviar">Reenviar código</button></div>';
+  }
+
+  h += '<div class="e-rodape"><button data-eacao="local">Usar sem conectar</button>'
+     + '<button data-eacao="config">Configurar</button></div>';
+  document.getElementById("tela").innerHTML = h + '</div>';
+
+  const enviar = async () => {
+    const el = document.getElementById("eEmail");
+    const e = el.value.trim();
+    if(!e || e.indexOf("@") < 1){ vista.entradaErro = "Digite um e-mail válido."; desenharEntrada(); return; }
+    const bt = document.getElementById("eEnviar");
+    bt.textContent = "Enviando…"; bt.disabled = true;
+    vista.entradaEmail = e; vista.entradaErro = "";
+    try{
+      await Auth.pedirCodigo(e);
+      vista.entradaPasso = "codigo";
+    }catch(err){ vista.entradaErro = String(err.message || err); }
+    desenharEntrada();
+  };
+  const confirmar = async () => {
+    const el = document.getElementById("eCodigo");
+    const cod = el.value.replace(/\D/g, "");
+    if(cod.length < 4){ vista.entradaErro = "Digite o código que chegou no e-mail."; desenharEntrada(); return; }
+    const bt = document.getElementById("eEntrar");
+    bt.textContent = "Conferindo…"; bt.disabled = true;
+    vista.entradaErro = "";
+    try{
+      await Auth.conferirCodigo(vista.entradaEmail, cod);
+      await gravarLocal(CHAVE_SES, sessao);
+      await gravarLocal(CHAVE_CFG, Object.assign({}, cfg, { senha:"" }));
+      vista.entradaPasso = "email"; vista.entradaErro = ""; vista.modo = "quadro";
+      const ok = await Sinc.conectar(false);
+      desenhar();
+      if(ok) brinde("Bem-vindo, " + (cfg.eu || sessao.email) + ".");
+      return;
+    }catch(err){ vista.entradaErro = String(err.message || err); }
+    desenharEntrada();
+  };
+
+  const b1 = document.getElementById("eEnviar");
+  if(b1){
+    b1.addEventListener("click", enviar);
+    document.getElementById("eEmail").addEventListener("keydown", ev => { if(ev.key === "Enter") enviar(); });
+    setTimeout(() => { const i = document.getElementById("eEmail"); if(i) i.focus(); }, 200);
+  }
+  const b2 = document.getElementById("eEntrar");
+  if(b2){
+    b2.addEventListener("click", confirmar);
+    document.getElementById("eCodigo").addEventListener("keydown", ev => { if(ev.key === "Enter") confirmar(); });
+    setTimeout(() => { const i = document.getElementById("eCodigo"); if(i) i.focus(); }, 200);
+  }
+}
+
 function desenharBusca(){
   const q = vista.busca.trim().toLowerCase();
   let h = '<div class="rolo">';
@@ -1983,16 +2278,37 @@ function desenharBusca(){
 function desenhar(){
   document.getElementById("tituloApp").textContent = estado.titulo || "Central do Gabinete";
   pintarMarca();
+
+  if(precisaEntrar()){
+    document.getElementById("abas").style.display = "none";
+    document.getElementById("setaE").classList.remove("on");
+    document.getElementById("setaD").classList.remove("on");
+    document.getElementById("btBusca").style.display = "none";
+    document.getElementById("fab").style.display = "none";
+    document.body.classList.add("sem-abas");
+    desenharEntrada();
+    pintarStatus();
+    return;
+  }
+  document.getElementById("abas").style.display = "";
+  document.getElementById("btBusca").style.display = "";
+  document.body.classList.remove("sem-abas");
+
   desenharAbas();
   if(vista.modo === "busca") desenharBusca();
   else if(vista.modo === "prazos") desenharPrazos();
   else if(vista.modo === "contatos") desenharContatos();
-  else if(vista.modo === "admin") desenharAdmin();
+  else if(vista.modo === "admin"){
+    if(vejoAdmin()) desenharAdmin();
+    else { vista.modo = "quadro"; desenharQuadro(); }
+  }
   else if(vista.modo === "pessoal") desenharPessoal();
   else desenharQuadro();
   setTimeout(ajustarSetas, 0);
   document.getElementById("fab").style.display =
-    ["quadro","contatos","admin","pessoal"].indexOf(vista.modo) > -1 ? "grid" : "none";
+    (["contatos","pessoal"].indexOf(vista.modo) > -1
+      || (vista.modo === "admin" && vejoAdmin())
+      || (vista.modo === "quadro" && podeCriarNaPasta(vista.pasta))) ? "grid" : "none";
   pintarStatus();
 }
 
@@ -2042,6 +2358,9 @@ function folhaCartao(cid, colunaPadrao){
   const base = c || { titulo:"", etiqueta:"", prazo:"", prioridade:"normal", notas:"" };
   const colAtual = c ? c.coluna : (colunaPadrao || (colunas(vista.pasta)[0] || {}).id);
   if(!colAtual){ brinde("Crie uma coluna antes de criar tarefas."); return; }
+  const kAlvo = estado.colunas[colAtual];
+  const soVer = c ? !podeEditarCartao(c) : !podeCriarNaPasta(kAlvo ? kAlvo.pasta : vista.pasta);
+  if(soVer && !c){ brinde("Somente leitura nesta pasta."); return; }
 
   const etiquetas = new Set();
   vivas(estado.cartoes).forEach(x => { if(x.etiqueta) etiquetas.add(x.etiqueta); });
@@ -2090,12 +2409,20 @@ function folhaCartao(cid, colunaPadrao){
     + '<div class="campo"><label for="fLocal">Pasta e coluna</label><select id="fLocal">'+opc+'</select></div>'
     + '<div class="campo"><label for="fNotas">Anotações</label><textarea id="fNotas" placeholder="Fundamentos, prazos regimentais, contatos…">'+esc(base.notas)+'</textarea></div>'
     + (c ? blocoHistorico(c) : '')
-    + '<div class="acoes">'
-    + (c ? '<button class="btn perigo" id="fExcluir" aria-label="'+(podeExcluir(c)?"Excluir tarefa":"Pedir exclusão")+'">'
-           + (podeExcluir(c) ? "✕" : "⌛") + '</button>' : '')
-    + '<button class="btn claro" data-fechar="1">Cancelar</button>'
-    + '<button class="btn" id="fSalvar">'+(c ? "Salvar" : "Criar tarefa")+'</button></div>'
+    + (soVer
+        ? '<div class="aviso">'+esc(avisoPasta(kAlvo.pasta) || "Sem permissão para alterar")+'. Você pode ver, mas não alterar esta tarefa.</div>'
+          + '<div class="acoes"><button class="btn" data-fechar="1">Fechar</button></div>'
+        : '<div class="acoes">'
+          + (c ? '<button class="btn perigo" id="fExcluir" aria-label="'+(podeExcluir(c)?"Excluir tarefa":"Pedir exclusão")+'">'
+                 + (podeExcluir(c) ? "✕" : "⌛") + '</button>' : '')
+          + '<button class="btn claro" data-fechar="1">Cancelar</button>'
+          + '<button class="btn" id="fSalvar">'+(c ? "Salvar" : "Criar tarefa")+'</button></div>')
   );
+
+  if(soVer){
+    folha.querySelectorAll("input, textarea, select").forEach(el => { el.readOnly = true; el.disabled = true; });
+    return;
+  }
 
   document.getElementById("fFeito").addEventListener("click", e => {
     const b = e.target.closest("button[data-f]");
@@ -2149,10 +2476,13 @@ function folhaCartao(cid, colunaPadrao){
       tocar(c);
     }else{
       const primeiro = cartoes(destino)[0];
+      const kd = estado.colunas[destino];
       const novo = Object.assign({
         id:id("c"), coluna:destino, ordem: primeiro ? primeiro.ordem - 1 : 0, n:proximoN(),
         feito: querFeito ? agora() : 0, criadoPor: idMembro(cfg.eu), criadoEm: agora()
       }, dados);
+      // em pasta com gerente e modo "própria", quem cria fica como responsável
+      if(kd && !podeEditarPasta(kd.pasta) && modoPasta(kd.pasta) === "propria" && !novo.resp) novo.resp = meuId();
       tocar(novo);
       registrar(novo, "c");
       ajustarFeito(novo, null);
@@ -2450,10 +2780,16 @@ function folhaPastas(){
     + '<div id="listaPastas" class="ordenavel">';
   lista.forEach(p => {
     const n = colunas(p.id).reduce((s,k) => s + cartoes(k.id).length, 0);
+    const g = gerenteDaPasta(p.id);
     h += '<div class="item-ord" data-pasta-ord="'+p.id+'">'
        + '<span class="punho" aria-hidden="true">⣿</span>'
        + '<button class="nome" data-renomear-pasta="'+p.id+'">'+esc(p.nome)
-       + '<small>'+n+' tarefa'+(n===1?"":"s")+(p.link?' · ligada ao Drive':'')+'</small></button>'
+       + '<small>'+n+' tarefa'+(n===1?"":"s")
+       + (g ? ' · gerente: '+esc(nomeGerente(p.id))
+              + (modoPasta(p.id) === "propria" ? ' (demais: as suas)' : ' (demais: só veem)')
+            : ' · aberta a todos')
+       + (p.link?' · Drive':'')+'</small></button>'
+       + '<button class="elo'+(g?" on":"")+'" data-gerente-pasta="'+p.id+'" aria-label="Gerente da pasta">☺</button>'
        + '<button class="elo'+(p.link?" on":"")+'" data-link-pasta="'+p.id+'" aria-label="Link do Drive">⛓</button>'
        + '</div>';
   });
@@ -2536,71 +2872,6 @@ function folhaColunas(){
   abrirFolha(h + '<div class="acoes"><button class="btn claro" data-fechar="1">Fechar</button></div>');
 }
 
-function folhaLogin(passo, email, erro){
-  passo = passo || "email";
-  if(passo === "email"){
-    abrirFolha(
-      '<h2>Entrar no quadro</h2>'
-      + '<p>Digite seu e-mail. Vamos mandar um código de 6 dígitos para confirmar que é você.</p>'
-      + (erro ? '<div class="aviso ruim">'+esc(erro)+'</div>' : '')
-      + '<div class="campo"><label for="lEmail">Seu e-mail</label>'
-      + '<input id="lEmail" type="email" value="'+esc(email || "")+'" placeholder="voce@exemplo.com.br" '
-      + 'autocapitalize="off" autocomplete="email" spellcheck="false"></div>'
-      + '<div class="acoes"><button class="btn claro" data-fechar="1">Cancelar</button>'
-      + '<button class="btn" id="lEnviar">Enviar código</button></div>'
-    );
-    const inp = document.getElementById("lEmail");
-    setTimeout(() => inp.focus(), 250);
-    document.getElementById("lEnviar").addEventListener("click", async () => {
-      const e = inp.value.trim();
-      if(!e || e.indexOf("@") < 1){ brinde("Digite um e-mail válido."); return; }
-      const bt = document.getElementById("lEnviar");
-      bt.textContent = "Enviando…"; bt.disabled = true;
-      try{ await Auth.pedirCodigo(e); folhaLogin("codigo", e); }
-      catch(err){ folhaLogin("email", e, String(err.message || err)); }
-    });
-    return;
-  }
-
-  abrirFolha(
-    '<h2>Código enviado</h2>'
-    + '<p>Procure na caixa de entrada de <strong>'+esc(email)+'</strong>. Confira o spam se demorar.</p>'
-    + '<div class="aviso">Chegou um <strong>link</strong> em vez de números? Também serve: toque no link do e-mail que você entra direto, sem precisar digitar nada aqui.</div>'
-    + (erro ? '<div class="aviso ruim">'+esc(erro)+'</div>' : '')
-    + '<div class="campo"><label for="lCodigo">Código</label>'
-    + '<input id="lCodigo" inputmode="numeric" maxlength="10" placeholder="Digite o código do e-mail" autocomplete="one-time-code" '
-    + 'style="font-family:var(--mono);font-size:20px;letter-spacing:.22em;text-align:center"></div>'
-    + '<div class="acoes"><button class="btn claro" id="lVoltar">Trocar e-mail</button>'
-    + '<button class="btn" id="lEntrar">Entrar</button></div>'
-    + '<div class="acoes"><button class="btn claro" id="lReenviar">Reenviar código</button></div>'
-  );
-  const inp = document.getElementById("lCodigo");
-  setTimeout(() => inp.focus(), 250);
-  const entrar = async () => {
-    const cod = inp.value.replace(/\D/g, "");   // tira espaços e traços que o e-mail às vezes traz
-    if(cod.length < 4){ brinde("Digite o código que chegou no e-mail."); return; }
-    const bt = document.getElementById("lEntrar");
-    bt.textContent = "Conferindo…"; bt.disabled = true;
-    try{
-      await Auth.conferirCodigo(email, cod);
-      cfg.modo = "login";
-      await gravarLocal(CHAVE_SES, sessao);
-      await gravarLocal(CHAVE_CFG, Object.assign({}, cfg, { senha:"" }));
-      fecharFolha();
-      const ok = await Sinc.conectar(false);
-      desenhar();
-      if(ok) brinde("Você entrou como " + (cfg.eu || sessao.email) + ".");
-    }catch(err){ folhaLogin("codigo", email, String(err.message || err)); }
-  };
-  document.getElementById("lEntrar").addEventListener("click", entrar);
-  inp.addEventListener("keydown", ev => { if(ev.key === "Enter") entrar(); });
-  document.getElementById("lVoltar").addEventListener("click", () => folhaLogin("email", email));
-  document.getElementById("lReenviar").addEventListener("click", async () => {
-    try{ await Auth.pedirCodigo(email); brinde("Código reenviado."); }
-    catch(err){ brinde(String(err.message || err)); }
-  });
-}
-
 function folhaSinc(){
   const conectado = Sinc.ligado;
   abrirFolha(
@@ -2671,13 +2942,16 @@ function folhaSinc(){
     cfg.modo = "login";
     if(!cfg.url || !cfg.chave){ brinde("Preencha o endereço e a chave primeiro."); return; }
     await gravarLocal(CHAVE_CFG, Object.assign({}, cfg, { senha:"" }));
-    folhaLogin("email", "");
+    fecharFolha();
+    vista.semEntrar = false; vista.entradaPasso = "email"; vista.entradaErro = "";
+    desenhar();
   });
 
   const sairBt = document.getElementById("sSair");
   if(sairBt) sairBt.addEventListener("click", () => {
     Auth.sair(); Sinc.desligar();
-    fecharFolha(); desenhar(); brinde("Você saiu. Os dados continuam neste aparelho.");
+    vista.semEntrar = false; vista.entradaPasso = "email"; vista.entradaErro = "";
+    fecharFolha(); desenhar(); brinde("Você saiu.");
   });
 
   document.getElementById("sLembrar").addEventListener("click", e => {
@@ -2701,7 +2975,9 @@ function folhaSinc(){
     if(cfg.modo === "senha" && !cfg.senha){ brinde("Preencha a senha do quadro."); return; }
     if(cfg.modo === "login" && !sessao){
       await gravarLocal(CHAVE_CFG, Object.assign({}, cfg, { senha:"" }));
-      folhaLogin("email", "");
+      fecharFolha();
+      vista.semEntrar = false; vista.entradaPasso = "email"; vista.entradaErro = "";
+      desenhar();
       return;
     }
     await gravarLocal(CHAVE_CFG, Object.assign({}, cfg, { senha: cfg.lembrar ? cfg.senha : "" }));
@@ -2746,15 +3022,33 @@ function folhaEquipe(){
   if(!lista.length){
     h += '<div class="nada">Ninguém registrado ainda.</div>';
   }else{
+    const posso = souDono();
     lista.forEach(m => {
       const minhas = vivas(estado.cartoes).filter(c => c.resp === m.id).length;
-      h += '<button class="item-menu" data-membro="'+m.id+'">'
-         + '<span class="av marca-icone" style="background:'+cor(m.nome)+';color:#fff;font-size:11px;font-weight:700">'+esc(iniciais(m.nome))+'</span>'
-         + '<span style="flex:1">'+esc(m.nome)+'<small>'+minhas+' tarefa'+(minhas===1?"":"s")
-         + ' · entrou '+quando(m.visto)+'</small></span>'
-         + '<span style="color:var(--alerta)" data-tirar="'+m.id+'">✕</span></button>';
+      const ehDono = estado.dono === m.id;
+      const pastasDele = pastas().filter(p => p.gerente === m.id);
+      h += '<div class="cartao-membro">'
+         + '<div class="topo"><span class="av" style="background:'+cor(m.nome)+'">'+esc(iniciais(m.nome))+'</span>'
+         + '<span class="txt">'+esc(m.nome)+'<small>'+minhas+' tarefa'+(minhas===1?"":"s")
+         + ' · entrou '+quando(m.visto)
+         + (pastasDele.length ? ' · gerencia ' + pastasDele.map(p => esc(p.nome)).join(", ") : '')
+         + '</small></span>'
+         + (posso && !ehDono ? '<button class="tirar" data-tirar="'+m.id+'" aria-label="Tirar da lista">✕</button>' : '')
+         + '</div>'
+         + '<div class="papeis">'
+         + (ehDono
+             ? '<span class="cracha dono">responsável pelo quadro</span>'
+             : '<button class="cracha'+(m.gerente?" on":"")+'" data-papel="gerente" data-mid="'+m.id+'"'
+               + (posso?"":" disabled")+'>gerência</button>'
+               + '<button class="cracha'+(m.admin?" on":"")+'" data-papel="admin" data-mid="'+m.id+'"'
+               + (posso?"":" disabled")+'>administração</button>')
+         + '<button class="cracha ver" data-membro="'+m.id+'">ver tarefas</button>'
+         + '</div></div>';
     });
-    h += '<div class="dica">Tirar alguém da lista não apaga as tarefas dela — só deixa de oferecer o nome como responsável.</div>';
+    h += '<div class="dica"><strong>Gerência</strong> exclui pastas, colunas e tarefas em qualquer lugar. '
+       + '<strong>Administração</strong> abre a aba da verba do gabinete. '
+       + 'Quem não tem nenhum dos dois edita normalmente as pastas sem gerente.</div>';
+    if(!posso) h += '<div class="aviso">Só ' + esc(nomeDono()) + ' altera os papéis.</div>';
   }
   abrirFolha(h + '<div class="acoes"><button class="btn claro" data-fechar="1">Fechar</button></div>');
 }
@@ -3022,6 +3316,12 @@ document.addEventListener("click", e => {
     const a = item.dataset.acao;
     const p = vista.pasta ? estado.pastas[vista.pasta] : null;
     if(a === "sinc") folhaSinc();
+    if(a === "renomear-pasta" && p && !podeEditarPasta(p.id)){
+      brinde("Só " + nomeGerente(p.id) + " ou a gerência podem renomear esta pasta."); return;
+    }
+    if(a === "nova-coluna" && p && !podeEditarPasta(p.id)){
+      brinde("Somente leitura nesta pasta."); return;
+    }
     if(a === "renomear-pasta" && p) pedirTexto("Nome da pasta", p.nome, v => {
       logar("renomeou a pasta “" + p.nome + "” para “" + v + "”");
       p.nome = v; tocar(p); mudou(); desenhar();
@@ -3041,7 +3341,9 @@ document.addEventListener("click", e => {
     if(a === "filtrar") folhaFiltro();
     if(a === "marca") folhaMarca();
     if(a === "nova-pasta") criarPasta();
-    if(a === "excluir-pasta" && p && !souDono()){ brinde("Só " + (nomeDono() || "o responsável") + " pode excluir pastas."); return; }
+    if(a === "excluir-pasta" && p && !souGerente()){
+      brinde("Só " + (nomeDono() || "o responsável") + " e a gerência podem excluir pastas."); return;
+    }
     if(a === "excluir-pasta" && p){
       const n = colunas(p.id).reduce((s,k) => s + pendentes(k.id).length, 0);
       abrirFolha('<h2>Excluir pasta</h2><p>Isso apaga <strong>'+esc(p.nome)+'</strong> e '+n+' tarefa'+(n===1?"":"s")+' para todo mundo do quadro.</p>'
@@ -3117,10 +3419,32 @@ document.addEventListener("click", e => {
   if(feitoBt){
     e.stopPropagation();
     const c = estado.cartoes[feitoBt.dataset.feito];
+    if(c && !podeEditarCartao(c)){
+      const kf = estado.colunas[c.coluna];
+      brinde(modoPasta(kf.pasta) === "propria"
+        ? "Você mexe só nas tarefas em que é responsável."
+        : "Pasta gerenciada por " + nomeGerente(kf.pasta) + ".");
+      return;
+    }
     if(c){
       if(c.feito){ c.feito = 0; registrar(c, "r"); }
       else { c.feito = agora(); registrar(c, "f"); }
       tocar(c); mudou(); desenhar();
+    }
+    return;
+  }
+
+  const papelBt = e.target.closest("[data-papel]");
+  if(papelBt){
+    e.stopPropagation();
+    if(!souDono()){ brinde("Só " + (nomeDono() || "o responsável") + " altera papéis."); return; }
+    const m = quem(papelBt.dataset.mid);
+    if(m){
+      const campo = papelBt.dataset.papel;
+      m[campo] = !m[campo];
+      m.mod = agora();
+      logar((m[campo] ? "deu" : "tirou") + " " + campo + " " + (m[campo] ? "a" : "de") + " " + m.nome);
+      mudou(); desenhar(); folhaEquipe();
     }
     return;
   }
@@ -3133,6 +3457,23 @@ document.addEventListener("click", e => {
     folhaEquipe();
     return;
   }
+  const setGer = e.target.closest("[data-setger]");
+  if(setGer){
+    const alvo = estado.pastas[setGer.dataset.pastaAlvo || folha.dataset.pastaAlvo || ""];
+    if(alvo){
+      const novo = setGer.dataset.setger || "";
+      alvo.gerente = novo;
+      if(!novo){ delete alvo.gerente; delete alvo.modo; }
+      tocar(alvo);
+      logar(novo ? ("definiu " + (quem(novo)||{}).nome + " como gerente de " + alvo.nome)
+                 : ("abriu a pasta " + alvo.nome + " para todos"));
+      mudou(); desenhar();
+      if(novo) folhaGerentePasta(alvo.id); else { fecharFolha(); folhaPastas(); }
+      brinde(novo ? ("Gerente definido: " + (quem(novo)||{}).nome + ".") : "Pasta aberta a todos.");
+    }
+    return;
+  }
+
   const filtrar = e.target.closest("[data-filtrar]");
   if(filtrar){
     vista.resp = filtrar.dataset.filtrar || null;
@@ -3164,7 +3505,9 @@ document.addEventListener("click", e => {
   if(del){
     e.stopPropagation();
     const k = estado.colunas[del.dataset.del];
-    if(!souDono()){ brinde("Só " + (nomeDono() || "o responsável") + " pode excluir colunas."); return; }
+    if(!souGerente() && gerenteDaPasta(vista.pasta) !== meuId()){
+      brinde("Só a gerência pode excluir colunas."); return;
+    }
     if(colunas(vista.pasta).length < 2){ brinde("Mantenha ao menos uma coluna."); return; }
     cartoes(k.id).forEach(c => { c.del = true; tocar(c); });
     k.del = true; tocar(k);
@@ -3181,6 +3524,9 @@ document.addEventListener("click", e => {
     });
     return;
   }
+  const gerP = e.target.closest("[data-gerente-pasta]");
+  if(gerP){ folhaGerentePasta(gerP.dataset.gerentePasta); return; }
+
   const linkP = e.target.closest("[data-link-pasta]");
   if(linkP){ folhaLinkDrive("pasta", linkP.dataset.linkPasta); return; }
 
@@ -3216,6 +3562,20 @@ document.addEventListener("click", e => {
 
   const fichaBt = e.target.closest("[data-contato]");
   if(fichaBt){ folhaContato(fichaBt.dataset.contato); return; }
+
+  const ea = e.target.closest("[data-eacao]");
+  if(ea){
+    const a = ea.dataset.eacao;
+    if(a === "voltar"){ vista.entradaPasso = "email"; vista.entradaErro = ""; desenharEntrada(); }
+    if(a === "reenviar"){
+      Auth.pedirCodigo(vista.entradaEmail)
+        .then(() => brinde("Código reenviado."))
+        .catch(err => brinde(String(err.message || err)));
+    }
+    if(a === "local"){ vista.semEntrar = true; vista.modo = "quadro"; desenhar(); brinde("Vendo só o que está neste aparelho."); }
+    if(a === "config") folhaSinc();
+    return;
+  }
 
   const vp = e.target.closest("[data-vprazo]");
   if(vp){ vista.prazoVista = vp.dataset.vprazo; vista.diaPrazo = null; desenharPrazos(); return; }
@@ -3340,6 +3700,8 @@ document.addEventListener("pointerdown", e => {
   if(e.button !== undefined && e.button !== 0) return;
   const cartao = e.target.closest(".cartao");
   if(!cartao) return;
+  const cAlvo = estado.cartoes[cartao.dataset.cartao];
+  if(!podeEditarCartao(cAlvo)) return;   // sem permissão nesta tarefa, não arrasta
   arrastou = false;
   inicio = { x:e.clientX, y:e.clientY };
   if(e.target.closest(".pega")){ e.preventDefault(); comecar(e, cartao); return; }
@@ -3479,6 +3841,8 @@ document.addEventListener("keydown", e => {
   if(!el || !el.classList || !el.classList.contains("cartao")) return;
   if(e.key === "Enter"){ folhaCartao(el.dataset.cartao); return; }
   if(e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+  const cTeclado = estado.cartoes[el.dataset.cartao];
+  if(!podeEditarCartao(cTeclado)){ brinde("Sem permissão para mover esta tarefa."); return; }
   e.preventDefault();
   const c = estado.cartoes[el.dataset.cartao];
   const ks = colunas(vista.pasta);
@@ -3536,7 +3900,7 @@ document.addEventListener("keydown", e => {
   }else if(cfg.url && cfg.chave){
     if(cfg.modo === "login"){
       if(sessao) conexaoInicial = Sinc.conectar(true);
-      else folhaLogin("email", "");
+      else desenhar();          // cai na tela de entrada
     }
     else if(cfg.senha){ conexaoInicial = Sinc.conectar(true); }
     else { brinde("Digite a senha do quadro para sincronizar."); folhaSinc(); }
